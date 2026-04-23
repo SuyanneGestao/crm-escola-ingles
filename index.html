@@ -126,7 +126,7 @@
             <a href="#" onclick="handleLogout()" class="block px-4 py-3 hover:bg-red-800 transition text-red-300 mt-4 border-t border-blue-800"><i class="fas fa-sign-out-alt w-6"></i> Sair do Sistema</a>
         </nav>
         <div class="absolute bottom-0 w-full p-4 border-t border-blue-800">
-            <p class="text-xs text-blue-300">v3.0 · Suyanne Gestão</p>
+            <p class="text-xs text-blue-300">v3.1 · Suyanne Gestão</p>
         </div>
     </div>
 
@@ -459,31 +459,32 @@
         // ==========================================
         async function loadData(page) {
             try {
-                switch(page) {
-                    case 'dashboard': await loadDashboard(); break;
-                    case 'leads': await loadLeads(); break;
-                    case 'alunos': await loadTable('alunos', 'table-alunos'); break;
-                    case 'professores': await loadProfessores(); break;
-                    case 'financeiro': await loadFinanceiro(); break;
-                    case 'tarefas': await loadTarefas(); break;
-                    case 'turmas': await loadTurmas(); break;
-                    case 'metodo': await loadMetodo(); break;
-                    case 'aniversariantes': await loadAniversariantes(); break;
-                    case 'marketing': await loadMarketing(); break;
-                    case 'templates': await loadTemplates(); break;
-                    case 'equipe': await loadEquipe(); break;
-                    case 'agenda': if(typeof gapi !== 'undefined' && gapi.client) listUpcomingEvents(); break;
+                // Consolidação de carregadores
+                if (page === 'dashboard') await loadDashboard();
+                else if (page === 'leads') await loadLeads();
+                else if (page === 'alunos') await loadTable('alunos', 'table-alunos');
+                else if (page === 'turmas') await loadTurmas();
+                else if (page === 'professores') await loadProfessores();
+                else if (page === 'financeiro') await loadFinanceiro();
+                else if (page === 'tarefas') await loadTarefas();
+                else if (page === 'metodo') await loadMetodo();
+                else if (page === 'aniversariantes') await loadAniversariantes();
+                else if (page === 'marketing') await loadMarketing();
+                else if (page === 'templates') await loadTemplates();
+                else if (page === 'equipe') await loadEquipe();
+                else if (page === 'agenda') {
+                    if (typeof gapi !== 'undefined' && gapi.client && gapi.client.calendar) {
+                        listUpcomingEvents();
+                    }
                 }
             } catch (error) {
-                console.error('Erro ao carregar:', error);
-                const msg = error.message || JSON.stringify(error);
+                console.error('Erro ao carregar página ' + page + ':', error);
                 if (typeof Swal !== 'undefined') {
-                    Swal.fire('Erro', 'Não foi possível carregar os dados: ' + msg, 'error');
-                } else {
-                    alert('Erro ao carregar os dados: ' + msg);
+                    Swal.fire('Erro', 'Falha ao carregar dados: ' + (error.message || 'Erro desconhecido'), 'error');
                 }
             }
         }
+        window.loadData = loadData;
 
         async function loadDashboard() {
             try {
@@ -643,24 +644,7 @@
             }
         }
 
-        // ==========================================
-        // CARREGAMENTO DE DADOS (OUTROS)
-        // ==========================================
-        window.loadData = async function(table) {
-            try {
-                if (table === 'turmas') await loadTurmas();
-                else if (table === 'professores') await loadProfessores();
-                else if (table === 'financeiro') await loadFinanceiro();
-                else if (table === 'tarefas') await loadTarefas();
-                else if (table === 'leads') await loadLeads();
-                else if (table === 'equipe') await loadEquipe();
-                else if (table === 'templates') await loadTemplates();
-                else await loadTable(table, 'table-' + table);
-            } catch (error) {
-                Swal.fire('Erro', 'Falha ao recarregar dados', 'error');
-                console.error(error);
-            }
-        };
+
 
         async function loadTurmas() {
             const { data, error } = await supabaseClient.from('turmas').select('*, professores(nome)').order('nome');
@@ -1401,6 +1385,17 @@
 
         // Inicializa o sistema (Checa login)
         window.onload = function() {
+            // Força atualização se versão for antiga
+            const lastVer = localStorage.getItem('app_version');
+            if (lastVer !== '3.1') {
+                localStorage.setItem('app_version', '3.1');
+                if ('serviceWorker' in navigator) {
+                    navigator.serviceWorker.getRegistrations().then(regs => {
+                        for(let reg of regs) reg.unregister();
+                        location.reload(true);
+                    });
+                }
+            }
             handleClientLoad(); // Init Google
             checkAuth();
         };
