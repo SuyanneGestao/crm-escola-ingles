@@ -40,6 +40,25 @@
     </style>
 </head>
 <body class="bg-gray-50">
+    <!-- Global Error Banner -->
+    <div id="global-error-banner" class="hidden fixed top-0 left-0 w-full bg-red-600 text-white p-4 z-[9999] shadow-lg flex justify-between items-start">
+        <div>
+            <h3 class="font-bold text-lg"><i class="fas fa-exclamation-triangle"></i> Erro Crítico Detectado</h3>
+            <p id="global-error-msg" class="text-sm font-mono mt-1 break-all"></p>
+        </div>
+        <button onclick="document.getElementById('global-error-banner').classList.add('hidden')" class="text-white hover:text-red-200"><i class="fas fa-times"></i></button>
+    </div>
+
+    <script>
+        window.addEventListener('error', function(e) {
+            document.getElementById('global-error-banner').classList.remove('hidden');
+            document.getElementById('global-error-msg').textContent = e.message + ' em ' + e.filename + ':' + e.lineno;
+        });
+        window.addEventListener('unhandledrejection', function(e) {
+            document.getElementById('global-error-banner').classList.remove('hidden');
+            document.getElementById('global-error-msg').textContent = 'Erro de Rede/Supabase: ' + (e.reason && e.reason.message ? e.reason.message : e.reason);
+        });
+    </script>
 
     <!-- PWA Install Banner -->
     <div id="pwa-banner" class="fixed top-0 left-0 right-0 z-50 bg-blue-900 text-white px-4 py-3 flex items-center justify-between shadow-lg">
@@ -298,8 +317,11 @@
         // NAVEGAÇÃO
         // ==========================================
         window.showPage = function(page) {
-            document.querySelectorAll('.page-section').forEach(el => el.classList.add('hidden'));
-            document.getElementById('page-' + page).classList.remove('hidden');
+            try {
+                document.querySelectorAll('.page-section').forEach(el => el.classList.add('hidden'));
+                const pageEl = document.getElementById('page-' + page);
+                if (!pageEl) throw new Error("Página não encontrada: " + page);
+                pageEl.classList.remove('hidden');
             
             const titles = {
                 'dashboard': ['Dashboard', 'Visão geral do sistema'],
@@ -318,7 +340,12 @@
             document.getElementById('page-title').textContent = titles[page][0];
             document.getElementById('page-subtitle').textContent = titles[page][1];
             
-            loadData(page);
+            loadData(page).catch(err => {
+                console.error("Erro no loadData da página " + page, err);
+            });
+            } catch (err) {
+                alert("Erro ao mudar de página: " + err.message);
+            }
         };
 
         // ==========================================
@@ -341,7 +368,12 @@
                 }
             } catch (error) {
                 console.error('Erro ao carregar:', error);
-                Swal.fire('Erro', 'Não foi possível carregar os dados: ' + error.message, 'error');
+                const msg = error.message || JSON.stringify(error);
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire('Erro', 'Não foi possível carregar os dados: ' + msg, 'error');
+                } else {
+                    alert('Erro ao carregar os dados: ' + msg);
+                }
             }
         }
 
@@ -365,6 +397,11 @@
                 document.getElementById('dash-inadimplencia').textContent = 'R$ ' + inadimplenciaTotal.toFixed(2).replace('.', ',');
             } catch (error) {
                 console.error('Erro no dashboard:', error);
+                document.getElementById('dash-total-leads').textContent = 'Erro';
+                document.getElementById('dash-total-alunos').textContent = 'Erro';
+                const msg = error.message || JSON.stringify(error);
+                document.getElementById('global-error-banner').classList.remove('hidden');
+                document.getElementById('global-error-msg').textContent = 'Falha no Dashboard: ' + msg;
             }
         }
 
