@@ -1,0 +1,7 @@
+API_KEY= AIzaSyAVQ6CNzM-Oqv3tcnD8239TBb2_JIXfOVs
+
+Google Calender 
+ID do cliente: 59606850308- tnqo2294q98pf373599mkjagqephffbb.apps.googleusercontent.com
+
+Chave secreta do cliente: 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
+Status: Ativadas

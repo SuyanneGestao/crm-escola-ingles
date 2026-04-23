@@ -38,8 +38,30 @@
         #sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 40; }
         #sidebar-overlay.show { display: block; }
     </style>
+    <!-- Google API -->
+    <script src="https://apis.google.com/js/api.js"></script>
 </head>
-<body class="bg-gray-50">
+<body class="bg-gray-50 overflow-hidden" id="body">
+    <!-- TELA DE LOGIN -->
+    <div id="login-screen" class="fixed inset-0 bg-blue-900 flex items-center justify-center z-[100] transition-opacity duration-500">
+        <div class="bg-white p-8 rounded-xl shadow-2xl w-full max-w-sm text-center">
+            <div class="bg-blue-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-lock text-3xl text-blue-600"></i>
+            </div>
+            <h2 class="text-2xl font-bold text-gray-800 mb-2">Central de Gestão</h2>
+            <p class="text-gray-500 text-sm mb-6">Acesso Restrito</p>
+            <form id="login-form" onsubmit="handleLogin(event)" class="space-y-4">
+                <div>
+                    <input type="email" id="login-email" required placeholder="Seu email" class="w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <input type="password" id="login-password" required placeholder="Sua senha" class="w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition shadow-lg">Entrar no Sistema</button>
+            </form>
+            <p id="login-error" class="text-red-500 text-sm mt-4 hidden">Credenciais incorretas.</p>
+        </div>
+    </div>
     <!-- Global Error Banner -->
     <div id="global-error-banner" class="hidden fixed top-0 left-0 w-full bg-red-600 text-white p-4 z-[9999] shadow-lg flex justify-between items-start">
         <div>
@@ -79,7 +101,7 @@
     <div id="sidebar-overlay"></div>
 
     <!-- Sidebar -->
-    <div id="main-sidebar" class="sidebar fixed left-0 top-0 h-full w-64 bg-blue-900 text-white overflow-y-auto z-50">
+    <div id="main-sidebar" class="sidebar fixed left-0 top-0 h-full w-64 bg-blue-900 text-white overflow-y-auto z-50 hidden md:block opacity-0 transition-opacity duration-500">
         <div class="p-4 border-b border-blue-800">
             <h1 class="text-xl font-bold">🏫 Central de Gestão</h1>
             <p class="text-sm text-blue-200">Escola de Inglês</p>
@@ -96,6 +118,9 @@
             <a href="#" onclick="showPage('aniversariantes')" class="block px-4 py-3 hover:bg-blue-800 transition"><i class="fas fa-birthday-cake w-6"></i> Aniversariantes</a>
             <a href="#" onclick="showPage('marketing')" class="block px-4 py-3 hover:bg-blue-800 transition"><i class="fas fa-ad w-6"></i> Marketing / ROI</a>
             <a href="#" onclick="showPage('templates')" class="block px-4 py-3 hover:bg-blue-800 transition"><i class="fas fa-comment-dots w-6"></i> Templates</a>
+            <a href="#" onclick="showPage('equipe')" class="block px-4 py-3 hover:bg-blue-800 transition"><i class="fas fa-id-badge w-6"></i> Equipe</a>
+            <a href="#" onclick="showPage('agenda')" class="block px-4 py-3 hover:bg-blue-800 transition"><i class="fas fa-calendar-alt w-6"></i> Agenda (Google)</a>
+            <a href="#" onclick="handleLogout()" class="block px-4 py-3 hover:bg-red-800 transition text-red-300 mt-4 border-t border-blue-800"><i class="fas fa-sign-out-alt w-6"></i> Sair do Sistema</a>
         </nav>
         <div class="absolute bottom-0 w-full p-4 border-t border-blue-800">
             <p class="text-xs text-blue-300">v3.0 · Suyanne Gestão</p>
@@ -103,7 +128,7 @@
     </div>
 
     <!-- Main Content -->
-    <div class="main-content ml-64 p-4 md:p-8" id="main-content">
+    <div class="main-content ml-0 md:ml-64 p-4 md:p-8 opacity-0 transition-opacity duration-500" id="main-content">
 
         <!-- Header -->
         <header class="mb-6 flex justify-between items-center">
@@ -164,23 +189,16 @@
             </div>
         </div>
 
-        <!-- LEADS -->
-        <div id="page-leads" class="page-section hidden">
-            <div class="flex justify-between items-center mb-6">
+        <!-- LEADS KANBAN -->
+        <div id="page-leads" class="page-section hidden h-[calc(100vh-120px)] flex flex-col">
+            <div class="flex justify-between items-center mb-6 shrink-0">
                 <h2 class="text-2xl md:text-3xl font-bold">CRM Leads</h2>
-                <button onclick="openModal('leads')" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">
+                <button onclick="openModal('leads')" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition shadow-sm">
                     <i class="fas fa-plus mr-2"></i>Novo Lead
                 </button>
             </div>
-            <div class="bg-white rounded-lg shadow">
-                <div class="table-wrap">
-                    <table class="w-full">
-                        <thead class="bg-gray-100">
-                            <tr><th class="p-3 text-left">Nome</th><th class="p-3 text-left">Email</th><th class="p-3 text-left">Telefone</th><th class="p-3 text-left">Etapa</th><th class="p-3 text-left">Ações</th></tr>
-                        </thead>
-                        <tbody id="table-leads"></tbody>
-                    </table>
-                </div>
+            <div id="kanban-board" class="flex-1 overflow-x-auto flex gap-4 pb-4 items-start">
+                <!-- Colunas carregadas via JS -->
             </div>
         </div>
 
@@ -286,6 +304,39 @@
             <div id="list-templates" class="space-y-4"></div>
         </div>
 
+        <!-- EQUIPE -->
+        <div id="page-equipe" class="page-section hidden">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-3xl font-bold">Equipe / Colaboradores</h2>
+                <button onclick="openModal('equipe')" class="bg-teal-600 text-white px-4 py-2 rounded hover:bg-teal-700 transition">
+                    <i class="fas fa-plus mr-2"></i>Novo Membro
+                </button>
+            </div>
+            <div id="list-equipe" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+        </div>
+
+        <!-- AGENDA GOOGLE CALENDAR -->
+        <div id="page-agenda" class="page-section hidden">
+            <div class="flex justify-between items-center mb-6">
+                <div>
+                    <h2 class="text-3xl font-bold">Agenda de Aulas</h2>
+                    <p class="text-gray-500">Integração com Google Calendar</p>
+                </div>
+                <button id="btn-auth-google" onclick="handleAuthClick()" class="bg-white border border-gray-300 text-gray-700 font-bold px-4 py-2 rounded hover:bg-gray-50 transition shadow-sm flex items-center gap-2">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" class="w-5 h-5" alt="G"> Conectar Conta Google
+                </button>
+            </div>
+            <div class="bg-white rounded-lg shadow p-6">
+                <div id="calendar-status" class="mb-4 text-center">
+                    <p class="text-gray-500"><i class="fas fa-calendar-times text-4xl mb-3"></i><br>Nenhuma conta conectada. Conecte sua conta para visualizar e sincronizar os eventos.</p>
+                </div>
+                <div id="calendar-events" class="space-y-3 hidden">
+                    <h3 class="font-bold border-b pb-2 mb-4">Próximos 10 eventos</h3>
+                    <ul id="events-list" class="space-y-2"></ul>
+                </div>
+            </div>
+        </div>
+
     </div>
 
     <!-- MODAL -->
@@ -312,6 +363,44 @@
 
         let currentTable = '';
         let currentId = null;
+        window.appData = {}; // Cache para edição
+
+        // ==========================================
+        // LOGIN / AUTENTICAÇÃO
+        // ==========================================
+        window.handleLogin = function(e) {
+            e.preventDefault();
+            const email = document.getElementById('login-email').value.trim();
+            const pass = document.getElementById('login-password').value;
+            const validEmails = ['suyanneh085@gmail.com', 'suyannegrs@gmail.com'];
+            
+            if (validEmails.includes(email) && pass === 'Suyanne123@Hellden') {
+                localStorage.setItem('crm_logged_in', 'true');
+                document.getElementById('login-screen').classList.add('opacity-0', 'pointer-events-none');
+                document.getElementById('main-sidebar').classList.remove('hidden', 'opacity-0');
+                document.getElementById('main-content').classList.remove('opacity-0');
+                document.body.classList.remove('overflow-hidden');
+                setTimeout(() => document.getElementById('login-screen').classList.add('hidden'), 500);
+                showPage('dashboard');
+            } else {
+                document.getElementById('login-error').classList.remove('hidden');
+            }
+        };
+
+        window.handleLogout = function() {
+            localStorage.removeItem('crm_logged_in');
+            location.reload();
+        };
+
+        function checkAuth() {
+            if (localStorage.getItem('crm_logged_in') === 'true') {
+                document.getElementById('login-screen').classList.add('hidden');
+                document.getElementById('main-sidebar').classList.remove('hidden', 'opacity-0');
+                document.getElementById('main-content').classList.remove('opacity-0');
+                document.body.classList.remove('overflow-hidden');
+                showPage('dashboard');
+            }
+        }
 
         // ==========================================
         // NAVEGAÇÃO
@@ -334,7 +423,9 @@
                 'metodo': ['Método & Progresso', 'Fases do método de ensino'],
                 'aniversariantes': ['Aniversariantes', 'Comemorações do mês'],
                 'marketing': ['Marketing / ROI', 'Acompanhamento de campanhas'],
-                'templates': ['Templates', 'Modelos de mensagem']
+                'templates': ['Templates', 'Modelos de mensagem'],
+                'equipe': ['Equipe', 'Colaboradores e Funcionários'],
+                'agenda': ['Agenda', 'Google Calendar']
             };
             
             document.getElementById('page-title').textContent = titles[page][0];
@@ -355,7 +446,7 @@
             try {
                 switch(page) {
                     case 'dashboard': await loadDashboard(); break;
-                    case 'leads': await loadTable('leads', 'table-leads'); break;
+                    case 'leads': await loadLeads(); break;
                     case 'alunos': await loadTable('alunos', 'table-alunos'); break;
                     case 'professores': await loadProfessores(); break;
                     case 'financeiro': await loadFinanceiro(); break;
@@ -365,6 +456,8 @@
                     case 'aniversariantes': await loadAniversariantes(); break;
                     case 'marketing': await loadMarketing(); break;
                     case 'templates': await loadTemplates(); break;
+                    case 'equipe': await loadEquipe(); break;
+                    case 'agenda': if(typeof gapi !== 'undefined' && gapi.client) listUpcomingEvents(); break;
                 }
             } catch (error) {
                 console.error('Erro ao carregar:', error);
@@ -409,6 +502,7 @@
             const { data, error } = await supabaseClient.from(table).select('*').order('created_at', { ascending: false });
             if (error) throw error;
             
+            window.appData[table] = data;
             const tbody = document.getElementById(elementId);
             tbody.innerHTML = '';
             
@@ -425,22 +519,139 @@
                 if (table === 'leads') {
                     cells = `<td class="p-3 font-medium">${row.nome}</td><td class="p-3">${row.email || '-'}</td><td class="p-3">${row.telefone || '-'}</td><td class="p-3"><span class="px-2 py-1 bg-blue-100 rounded text-sm">${row.etapa}</span></td>`;
                 } else if (table === 'alunos') {
-                    cells = `<td class="p-3 font-medium">${row.nome}</td><td class="p-3">${row.email || '-'}</td><td class="p-3">${row.telefone || '-'}</td><td class="p-3">${row.nivel}</td><td class="p-3"><span class="px-2 py-1 bg-green-100 rounded text-sm">${row.status}</span></td>`;
+                    cells = `<td class="p-3 font-medium">${row.nome}</td><td class="p-3">${row.email || '-'}</td><td class="p-3">${row.telefone || '-'}</td><td class="p-3">${row.nivel || '-'}</td><td class="p-3"><span class="px-2 py-1 bg-green-100 rounded text-sm">${row.status || '-'}</span></td>`;
                 }
                 
                 tr.innerHTML = cells + `
-                    <td class="p-3">
-                        <button onclick="deleteItem('${table}', '${row.id}')" class="text-red-600 hover:text-red-800 transition"><i class="fas fa-trash"></i></button>
+                    <td class="p-3 whitespace-nowrap">
+                        <button onclick="openModal('${table}', '${row.id}')" class="text-blue-600 hover:text-blue-800 transition mr-2" title="Editar"><i class="fas fa-edit"></i></button>
+                        <button onclick="deleteItem('${table}', '${row.id}')" class="text-red-600 hover:text-red-800 transition" title="Excluir"><i class="fas fa-trash"></i></button>
                     </td>
                 `;
                 tbody.appendChild(tr);
             });
         }
+        // ==========================================
+        // KANBAN CRM LEADS
+        // ==========================================
+        async function loadLeads() {
+            const { data, error } = await supabaseClient.from('leads').select('*').order('created_at', { ascending: false });
+            if (error) throw error;
+            
+            window.appData['leads'] = data;
+            const board = document.getElementById('kanban-board');
+            board.innerHTML = '';
+            
+            const columns = ['Novo', 'Contato', 'Proposta', 'Negociação', 'Fechado'];
+            
+            columns.forEach(col => {
+                const colLeads = data ? data.filter(l => l.etapa === col) : [];
+                
+                const colDiv = document.createElement('div');
+                colDiv.className = 'bg-gray-100 rounded-lg w-80 shrink-0 flex flex-col max-h-full';
+                
+                colDiv.innerHTML = `
+                    <div class="p-3 border-b border-gray-200 font-bold flex justify-between items-center text-gray-700">
+                        ${col} <span class="bg-gray-200 text-xs px-2 py-1 rounded-full">${colLeads.length}</span>
+                    </div>
+                    <div class="p-3 flex-1 overflow-y-auto space-y-3 kanban-col" id="col-${col.replace(/ /g, '-')}" ondrop="drop(event)" ondragover="allowDrop(event)" data-etapa="${col}">
+                        ${colLeads.map(l => {
+                            const tempClass = l.temperatura === 'Quente' ? 'bg-red-100 text-red-800' : l.temperatura === 'Morno' ? 'bg-yellow-100 text-yellow-800' : 'bg-blue-100 text-blue-800';
+                            return `
+                                <div class="bg-white p-4 rounded shadow-sm border border-gray-200 cursor-grab active:cursor-grabbing hover:border-blue-300 transition relative group" 
+                                    draggable="true" ondragstart="drag(event)" id="lead-${l.id}" data-id="${l.id}">
+                                    
+                                    <div class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition flex gap-1">
+                                        <button onclick="openModal('leads', '${l.id}')" class="text-blue-500 hover:text-blue-700 bg-white rounded-full w-6 h-6 flex items-center justify-center shadow"><i class="fas fa-edit text-xs"></i></button>
+                                        <button onclick="deleteItem('leads', '${l.id}')" class="text-red-500 hover:text-red-700 bg-white rounded-full w-6 h-6 flex items-center justify-center shadow"><i class="fas fa-trash text-xs"></i></button>
+                                    </div>
+                                    
+                                    <h4 class="font-bold text-gray-800 mb-1 pr-10 truncate cursor-pointer" onclick="openModal('leads', '${l.id}')">${l.nome}</h4>
+                                    <p class="text-xs text-gray-500 mb-2 truncate"><i class="fas fa-envelope mr-1"></i>${l.email || '-'}</p>
+                                    <p class="text-xs text-gray-500 mb-3"><i class="fas fa-phone mr-1"></i>${l.telefone || '-'}</p>
+                                    <div class="flex gap-2">
+                                        <span class="text-[10px] px-2 py-0.5 rounded-full bg-gray-100 font-semibold text-gray-600 border border-gray-200">${l.canal || 'Sem Canal'}</span>
+                                        ${l.temperatura ? `<span class="text-[10px] px-2 py-0.5 rounded-full font-semibold ${tempClass}">${l.temperatura}</span>` : ''}
+                                    </div>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                `;
+                board.appendChild(colDiv);
+            });
+        }
+
+        function allowDrop(ev) {
+            ev.preventDefault();
+        }
+
+        function drag(ev) {
+            ev.dataTransfer.setData("text", ev.currentTarget.id);
+        }
+
+        async function drop(ev) {
+            ev.preventDefault();
+            const leadIdStr = ev.dataTransfer.getData("text");
+            const leadCard = document.getElementById(leadIdStr);
+            if (!leadCard) return;
+            
+            let colDiv = ev.target;
+            while(colDiv && !colDiv.classList.contains('kanban-col')) {
+                colDiv = colDiv.parentElement;
+            }
+            if(!colDiv) return;
+
+            colDiv.appendChild(leadCard);
+            
+            const uuid = leadCard.getAttribute('data-id');
+            const novaEtapa = colDiv.getAttribute('data-etapa');
+            
+            try {
+                const { error } = await supabaseClient.from('leads').update({ etapa: novaEtapa }).eq('id', uuid);
+                if(error) throw error;
+                
+                // Update local counts by reloading silently
+                const { data: updatedData } = await supabaseClient.from('leads').select('*').order('created_at', { ascending: false });
+                if(updatedData) window.appData['leads'] = updatedData;
+                
+                // Update column counters in UI
+                const cols = document.querySelectorAll('.kanban-col');
+                cols.forEach(c => {
+                    const countSpan = c.previousElementSibling.querySelector('span');
+                    if(countSpan) countSpan.textContent = c.children.length;
+                });
+            } catch(e) {
+                console.error(e);
+                Swal.fire('Erro', 'Não foi possível atualizar a etapa.', 'error');
+                loadLeads(); // rollback
+            }
+        }
+
+        // ==========================================
+        // CARREGAMENTO DE DADOS (OUTROS)
+        // ==========================================
+        window.loadData = async function(table) {
+            try {
+                if (table === 'turmas') await loadTurmas();
+                else if (table === 'professores') await loadProfessores();
+                else if (table === 'financeiro') await loadFinanceiro();
+                else if (table === 'tarefas') await loadTarefas();
+                else if (table === 'leads') await loadLeads();
+                else if (table === 'equipe') await loadEquipe();
+                else if (table === 'templates') await loadTemplates();
+                else await loadTable(table, 'table-' + table);
+            } catch (error) {
+                Swal.fire('Erro', 'Falha ao recarregar dados', 'error');
+                console.error(error);
+            }
+        };
 
         async function loadTurmas() {
             const { data, error } = await supabaseClient.from('turmas').select('*, professores(nome)').order('nome');
             if (error) throw error;
             
+            window.appData['turmas'] = data;
             const div = document.getElementById('list-turmas');
             div.innerHTML = '';
             
@@ -455,13 +666,16 @@
                         <h4 class="font-bold text-lg text-gray-800 mb-2">${t.nome}</h4>
                         <div class="space-y-1 text-sm">
                             <p class="text-gray-600"><i class="fas fa-chalkboard-teacher w-5"></i> ${t.professores?.nome || 'Não atribuído'}</p>
-                            <p class="text-gray-600"><i class="fas fa-layer-group w-5"></i> ${t.nivel}</p>
+                            <p class="text-gray-600"><i class="fas fa-layer-group w-5"></i> ${t.nivel || '-'}</p>
                             <p class="text-gray-600"><i class="fas fa-clock w-5"></i> ${t.horario || '-'}</p>
                             <p class="text-gray-600"><i class="fas fa-calendar w-5"></i> ${t.dias || '-'}</p>
                         </div>
-                        <div class="mt-4 flex justify-between items-center">
-                            <span class="px-3 py-1 bg-${t.status === 'Ativa' ? 'green' : 'yellow'}-100 text-${t.status === 'Ativa' ? 'green' : 'yellow'}-800 rounded-full text-xs font-semibold">${t.status}</span>
-                            <button onclick="deleteItem('turmas', '${t.id}')" class="text-red-600 hover:text-red-800 transition"><i class="fas fa-trash"></i></button>
+                        <div class="mt-4 flex justify-between items-center border-t pt-4">
+                            <span class="px-3 py-1 bg-${t.status === 'Ativa' ? 'green' : 'yellow'}-100 text-${t.status === 'Ativa' ? 'green' : 'yellow'}-800 rounded-full text-xs font-semibold">${t.status || 'Ativa'}</span>
+                            <div class="space-x-2">
+                                <button onclick="openModal('turmas', '${t.id}')" class="text-blue-600 hover:text-blue-800 transition"><i class="fas fa-edit"></i></button>
+                                <button onclick="deleteItem('turmas', '${t.id}')" class="text-red-600 hover:text-red-800 transition"><i class="fas fa-trash"></i></button>
+                            </div>
                         </div>
                     </div>
                 `;
@@ -472,6 +686,7 @@
             const { data, error } = await supabaseClient.from('professores').select('*').order('nome');
             if (error) throw error;
             
+            window.appData['professores'] = data;
             const div = document.getElementById('list-professores');
             div.innerHTML = '';
             
@@ -485,10 +700,48 @@
                     <div class="bg-white p-4 rounded-lg shadow flex justify-between items-center card-hover">
                         <div>
                             <h4 class="font-bold text-gray-800">${p.nome}</h4>
-                            <p class="text-sm text-gray-600">${p.email || '-'}</p>
-                            <p class="text-sm text-gray-600">${p.telefone || '-'}</p>
+                            <p class="text-sm text-gray-600"><i class="fas fa-envelope mr-1"></i>${p.email || '-'}</p>
+                            <p class="text-sm text-gray-600"><i class="fas fa-phone mr-1"></i>${p.telefone || '-'}</p>
+                            ${p.google_calendar_link ? `<a href="${p.google_calendar_link}" target="_blank" class="text-xs text-blue-600 hover:underline mt-1 block"><i class="fas fa-external-link-alt mr-1"></i>Ver Agenda</a>` : ''}
                         </div>
-                        <button onclick="deleteItem('professores', '${p.id}')" class="text-red-600 hover:text-red-800 transition px-3 py-2"><i class="fas fa-trash"></i></button>
+                        <div class="space-x-1">
+                            <button onclick="openModal('professores', '${p.id}')" class="text-blue-600 hover:text-blue-800 transition px-2 py-2"><i class="fas fa-edit"></i></button>
+                            <button onclick="deleteItem('professores', '${p.id}')" class="text-red-600 hover:text-red-800 transition px-2 py-2"><i class="fas fa-trash"></i></button>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        async function loadEquipe() {
+            const { data, error } = await supabaseClient.from('equipe').select('*').order('nome');
+            if (error) throw error;
+            
+            window.appData['equipe'] = data;
+            const div = document.getElementById('list-equipe');
+            div.innerHTML = '';
+            
+            if (!data || data.length === 0) {
+                div.innerHTML = '<p class="text-gray-500 text-center col-span-2 py-8">Nenhum membro cadastrado na equipe</p>';
+                return;
+            }
+            
+            data.forEach(m => {
+                div.innerHTML += `
+                    <div class="bg-white p-5 rounded-lg shadow flex justify-between items-start card-hover border-l-4 ${m.status==='Ativo' ? 'border-teal-500' : 'border-gray-400'}">
+                        <div>
+                            <h4 class="font-bold text-gray-800 text-lg">${m.nome}</h4>
+                            <p class="text-xs font-semibold text-teal-600 mb-2 uppercase">${m.cargo || 'Não definido'}</p>
+                            <p class="text-sm text-gray-600"><i class="fas fa-envelope w-4"></i> ${m.email || '-'}</p>
+                            <p class="text-sm text-gray-600"><i class="fas fa-phone w-4"></i> ${m.telefone || '-'}</p>
+                        </div>
+                        <div class="flex flex-col items-end gap-2">
+                            <span class="px-2 py-1 text-xs rounded font-semibold ${m.status==='Ativo' ? 'bg-teal-100 text-teal-800' : 'bg-gray-100 text-gray-600'}">${m.status}</span>
+                            <div class="flex gap-2 mt-2">
+                                <button onclick="openModal('equipe', '${m.id}')" class="text-blue-600 hover:text-blue-800 transition p-1"><i class="fas fa-edit"></i></button>
+                                <button onclick="deleteItem('equipe', '${m.id}')" class="text-red-600 hover:text-red-800 transition p-1"><i class="fas fa-trash"></i></button>
+                            </div>
+                        </div>
                     </div>
                 `;
             });
@@ -498,6 +751,7 @@
             const { data, error } = await supabaseClient.from('financeiro').select('*, alunos(nome)').order('vencimento', { ascending: false });
             if (error) throw error;
             
+            window.appData['financeiro'] = data;
             const tbody = document.getElementById('table-financeiro');
             tbody.innerHTML = '';
             
@@ -515,9 +769,10 @@
                     <td class="p-3">${new Date(row.vencimento).toLocaleDateString('pt-BR')}</td>
                     <td class="p-3 font-semibold">R$ ${Number(row.valor).toFixed(2).replace('.', ',')}</td>
                     <td class="p-3"><span class="px-2 py-1 bg-${row.status === 'Pago' ? 'green' : row.status === 'Atrasado' ? 'red' : 'yellow'}-100 rounded text-sm font-medium">${row.status}</span></td>
-                    <td class="p-3">
-                        ${row.status !== 'Pago' ? `<button onclick="markPaid('${row.id}')" class="text-green-600 hover:text-green-800 transition mr-3"><i class="fas fa-check"></i></button>` : ''}
-                        <button onclick="deleteItem('financeiro', '${row.id}')" class="text-red-600 hover:text-red-800 transition"><i class="fas fa-trash"></i></button>
+                    <td class="p-3 whitespace-nowrap">
+                        ${row.status !== 'Pago' ? `<button onclick="markPaid('${row.id}')" class="text-green-600 hover:text-green-800 transition mr-2" title="Marcar como Pago"><i class="fas fa-check"></i></button>` : ''}
+                        <button onclick="openModal('financeiro', '${row.id}')" class="text-blue-600 hover:text-blue-800 transition mr-2" title="Editar"><i class="fas fa-edit"></i></button>
+                        <button onclick="deleteItem('financeiro', '${row.id}')" class="text-red-600 hover:text-red-800 transition" title="Excluir"><i class="fas fa-trash"></i></button>
                     </td>
                 `;
                 tbody.appendChild(tr);
@@ -528,6 +783,7 @@
             const { data, error } = await supabaseClient.from('tarefas').select('*').order('prazo');
             if (error) throw error;
             
+            window.appData['tarefas'] = data;
             const div = document.getElementById('list-tarefas');
             div.innerHTML = '';
             
@@ -546,6 +802,7 @@
                         </div>
                         <div class="flex items-center gap-3">
                             <span class="px-2 py-1 bg-${t.prioridade === 'Alta' ? 'red' : t.prioridade === 'Média' ? 'yellow' : 'blue'}-100 text-${t.prioridade === 'Alta' ? 'red' : t.prioridade === 'Média' ? 'yellow' : 'blue'}-800 rounded text-xs font-semibold">${t.prioridade}</span>
+                            <button onclick="openModal('tarefas', '${t.id}')" class="text-blue-600 hover:text-blue-800 transition"><i class="fas fa-edit"></i></button>
                             <button onclick="deleteItem('tarefas', '${t.id}')" class="text-red-600 hover:text-red-800 transition"><i class="fas fa-trash"></i></button>
                         </div>
                     </div>
@@ -676,6 +933,7 @@
             const { data, error } = await supabaseClient.from('templates').select('*').order('created_at', { ascending: false });
             if (error) throw error;
             
+            window.appData['templates'] = data;
             const div = document.getElementById('list-templates');
             div.innerHTML = '';
             
@@ -707,8 +965,12 @@
                             <div class="flex items-center gap-2">
                                 <span class="px-2 py-1 ${canalClass} rounded text-xs font-semibold">${t.canal || '-'}</span>
                                 <button onclick="copyTemplate('${(t.conteudo||'').replace(/'/g,"&apos;")}')"
-                                    class="text-blue-500 hover:text-blue-700 transition p-1" title="Copiar mensagem">
+                                    class="text-green-500 hover:text-green-700 transition p-1" title="Copiar mensagem">
                                     <i class="fas fa-copy"></i>
+                                </button>
+                                <button onclick="openModal('templates', '${t.id}')"
+                                    class="text-blue-500 hover:text-blue-700 transition p-1" title="Editar">
+                                    <i class="fas fa-edit"></i>
                                 </button>
                                 <button onclick="deleteItem('templates', '${t.id}')"
                                     class="text-red-400 hover:text-red-600 transition p-1" title="Excluir">
@@ -731,17 +993,16 @@
         }
 
         // ==========================================
-        // MODAL E FORMULÁRIOS - CORREÇÃO COMPLETA
+        // MODAL E FORMULÁRIOS - EDIÇÃO E NOVOS CAMPOS
         // ==========================================
-        window.openModal = function(table) {
+        window.openModal = function(table, id = null) {
             currentTable = table;
-            currentId = null;
+            currentId = id;
             const modal = document.getElementById('modal');
             const title = document.getElementById('modal-title');
             const fields = document.getElementById('modal-fields');
             
-            const configs = {
-                'leads': { title: 'Novo Lead', fields: [
+                'leads': { title: 'Lead', fields: [
                     { name: 'nome', label: 'Nome', type: 'text', required: true },
                     { name: 'email', label: 'Email', type: 'email' },
                     { name: 'telefone', label: 'Telefone', type: 'text' },
@@ -749,7 +1010,7 @@
                     { name: 'canal', label: 'Canal', type: 'select', options: ['Instagram', 'Indicação', 'WhatsApp', 'Google Ads', 'Facebook', 'Site'] },
                     { name: 'temperatura', label: 'Temperatura', type: 'select', options: ['Frio', 'Morno', 'Quente'] }
                 ]},
-                'alunos': { title: 'Novo Aluno - Cadastro Completo', fields: [
+                'alunos': { title: 'Aluno - Cadastro Completo', fields: [
                     { name: 'nome', label: 'Nome Completo', type: 'text', required: true },
                     { name: 'email', label: 'Email', type: 'email' },
                     { name: 'telefone', label: 'Telefone/WhatsApp', type: 'text' },
@@ -757,31 +1018,42 @@
                     { name: 'data_nascimento', label: 'Data de Nascimento', type: 'date' },
                     { name: 'instagram', label: 'Instagram', type: 'text', placeholder: '@usuario' },
                     { name: 'nivel', label: 'Nível de Inglês', type: 'select', options: ['Básico', 'Intermediário', 'Avançado'] },
-                    { name: 'status', label: 'Status', type: 'select', options: ['Ativo', 'Pausado', 'Cancelado', 'Concluído'] }
+                    { name: 'status', label: 'Status', type: 'select', options: ['Ativo', 'Pausado', 'Cancelado', 'Concluído'] },
+                    { name: 'valor_negociado', label: 'Valor Negociado (R$)', type: 'number', step: '0.01' },
+                    { name: 'temperatura', label: 'Temperatura (Funil)', type: 'select', options: ['Frio', 'Morno', 'Quente'] }
                 ]},
-                'turmas': { title: 'Nova Turma', fields: [
+                'turmas': { title: 'Turma', fields: [
                     { name: 'nome', label: 'Nome', type: 'text', required: true },
                     { name: 'nivel', label: 'Nível', type: 'select', options: ['Básico', 'Intermediário', 'Avançado'] },
                     { name: 'horario', label: 'Horário', type: 'text', placeholder: 'Ex: 19:00' },
-                    { name: 'dias', label: 'Dias', type: 'text', placeholder: 'Ex: Segunda, Quarta, Sexta' }
+                    { name: 'dias', label: 'Dias', type: 'text', placeholder: 'Ex: Segunda, Quarta, Sexta' },
+                    { name: 'sincronizar_calendar', label: 'Sincronizar com Google Calendar? (Marque Sim para enviar agendamento)', type: 'select', options: ['Não', 'Sim'] }
                 ]},
-                'professores': { title: 'Novo Professor', fields: [
+                'professores': { title: 'Professor', fields: [
                     { name: 'nome', label: 'Nome', type: 'text', required: true },
                     { name: 'email', label: 'Email', type: 'email' },
-                    { name: 'telefone', label: 'Telefone', type: 'text' }
+                    { name: 'telefone', label: 'Telefone', type: 'text' },
+                    { name: 'google_calendar_link', label: 'Link do Google Calendar (Público)', type: 'text', placeholder: 'https://calendar.google.com/...' }
                 ]},
-                'financeiro': { title: 'Nova Cobrança', fields: [
+                'equipe': { title: 'Membro da Equipe', fields: [
+                    { name: 'nome', label: 'Nome', type: 'text', required: true },
+                    { name: 'email', label: 'Email', type: 'email' },
+                    { name: 'telefone', label: 'Telefone', type: 'text' },
+                    { name: 'cargo', label: 'Cargo', type: 'text', placeholder: 'Ex: Recepcionista, Gestor' },
+                    { name: 'status', label: 'Status', type: 'select', options: ['Ativo', 'Inativo'] }
+                ]},
+                'financeiro': { title: 'Cobrança', fields: [
                     { name: 'descricao', label: 'Descrição', type: 'text', required: true },
                     { name: 'valor', label: 'Valor', type: 'number', step: '0.01', required: true },
                     { name: 'vencimento', label: 'Vencimento', type: 'date', required: true }
                 ]},
-                'tarefas': { title: 'Nova Tarefa', fields: [
+                'tarefas': { title: 'Tarefa', fields: [
                     { name: 'titulo', label: 'Título', type: 'text', required: true },
                     { name: 'descricao', label: 'Descrição', type: 'textarea' },
                     { name: 'prazo', label: 'Prazo', type: 'date' },
                     { name: 'prioridade', label: 'Prioridade', type: 'select', options: ['Alta', 'Média', 'Baixa'] }
                 ]},
-                'templates': { title: 'Novo Template', fields: [
+                'templates': { title: 'Template', fields: [
                     { name: 'nome', label: 'Nome do Template', type: 'text', required: true },
                     { name: 'categoria', label: 'Categoria', type: 'text', placeholder: 'Ex: Boas-vindas, Cobrança' },
                     { name: 'canal', label: 'Canal', type: 'select', options: ['WhatsApp', 'Instagram', 'Email', 'SMS'] },
@@ -790,16 +1062,29 @@
             };
             
             const config = configs[table];
-            title.textContent = config.title;
+            title.textContent = id ? 'Editar ' + config.title : 'Novo ' + config.title;
             fields.innerHTML = config.fields.map(f => {
                 if (f.type === 'select') {
-                    return `<div><label class="block text-sm font-medium mb-1">${f.label}</label><select name="${f.name}" class="w-full border rounded p-2 focus:ring-2 focus:ring-blue-500" ${f.required ? 'required' : ''}>${f.options.map(o => `<option value="${o}">${o}</option>`).join('')}</select></div>`;
+                    return `<div><label class="block text-sm font-medium mb-1">${f.label}</label><select id="field-${f.name}" name="${f.name}" class="w-full border rounded p-2 focus:ring-2 focus:ring-blue-500" ${f.required ? 'required' : ''}>${f.options.map(o => `<option value="${o}">${o}</option>`).join('')}</select></div>`;
                 }
                 if (f.type === 'textarea') {
-                    return `<div><label class="block text-sm font-medium mb-1">${f.label}</label><textarea name="${f.name}" rows="3" class="w-full border rounded p-2 focus:ring-2 focus:ring-blue-500" ${f.required ? 'required' : ''} ${f.placeholder ? `placeholder="${f.placeholder}"` : ''}></textarea></div>`;
+                    return `<div><label class="block text-sm font-medium mb-1">${f.label}</label><textarea id="field-${f.name}" name="${f.name}" rows="3" class="w-full border rounded p-2 focus:ring-2 focus:ring-blue-500" ${f.required ? 'required' : ''} ${f.placeholder ? `placeholder="${f.placeholder}"` : ''}></textarea></div>`;
                 }
-                return `<div><label class="block text-sm font-medium mb-1">${f.label}</label><input type="${f.type}" name="${f.name}" class="w-full border rounded p-2 focus:ring-2 focus:ring-blue-500" ${f.required ? 'required' : ''} ${f.step ? `step="${f.step}"` : ''} ${f.placeholder ? `placeholder="${f.placeholder}"` : ''}></div>`;
+                return `<div><label class="block text-sm font-medium mb-1">${f.label}</label><input id="field-${f.name}" type="${f.type}" name="${f.name}" class="w-full border rounded p-2 focus:ring-2 focus:ring-blue-500" ${f.required ? 'required' : ''} ${f.step ? `step="${f.step}"` : ''} ${f.placeholder ? `placeholder="${f.placeholder}"` : ''}></div>`;
             }).join('');
+            
+            // Se for edição, preenche os dados
+            if (id && window.appData[table]) {
+                const item = window.appData[table].find(x => x.id === id);
+                if (item) {
+                    config.fields.forEach(f => {
+                        const input = document.getElementById(`field-${f.name}`);
+                        if (input && item[f.name] !== undefined && item[f.name] !== null) {
+                            input.value = item[f.name];
+                        }
+                    });
+                }
+            }
             
             modal.classList.remove('hidden');
         };
@@ -814,13 +1099,28 @@
             const formData = new FormData(form);
             const data = Object.fromEntries(formData.entries());
             
-            try {
-                const { error } = await supabaseClient.from(currentTable).insert(data);
-                
-                if (error) {
-                    Swal.fire('Erro', error.message, 'error');
+            // Regra especial: se tem sincronizar_calendar == 'Sim', vamos criar no Google (se gapi logado)
+            if (currentTable === 'turmas' && data.sincronizar_calendar === 'Sim') {
+                if (typeof gapi !== 'undefined' && gapi.auth2 && gapi.auth2.getAuthInstance().isSignedIn.get()) {
+                    createCalendarEvent(data.nome, data.horario, data.dias);
                 } else {
-                    Swal.fire('Sucesso', 'Registro salvo com sucesso!', 'success');
+                    Swal.fire('Aviso', 'Sua conta do Google não está conectada na aba Agenda. O evento não foi criado no calendário, mas a turma será salva.', 'warning');
+                }
+            }
+            delete data.sincronizar_calendar; // Remove campo virtual
+            
+            try {
+                let result;
+                if (currentId) {
+                    result = await supabaseClient.from(currentTable).update(data).eq('id', currentId);
+                } else {
+                    result = await supabaseClient.from(currentTable).insert(data);
+                }
+                
+                if (result.error) {
+                    Swal.fire('Erro', result.error.message, 'error');
+                } else {
+                    Swal.fire('Sucesso', currentId ? 'Registro atualizado!' : 'Registro salvo com sucesso!', 'success');
                     closeModal();
                     loadData(currentTable);
                     loadDashboard(); // Atualiza dashboard após salvar
@@ -952,8 +1252,142 @@
             deferredPrompt = null;
         });
 
-        // Inicializa o sistema
-        showPage('dashboard');
+        // ==========================================
+        // GOOGLE CALENDAR API INTEGRAÇÃO
+        // ==========================================
+        const CLIENT_ID = '59606850308-tnqo2294q98pf373599mkjagqephffbb.apps.googleusercontent.com';
+        const API_KEY = 'AIzaSyAVQ6CNzM-Oqv3tcnD8239TBb2_JIXfOVs';
+        const DISCOVERY_DOCS = ["https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest"];
+        const SCOPES = "https://www.googleapis.com/auth/calendar.events";
+
+        function handleClientLoad() {
+            if(typeof gapi !== 'undefined') {
+                gapi.load('client:auth2', initClient);
+            }
+        }
+
+        function initClient() {
+            gapi.client.init({
+                apiKey: API_KEY,
+                clientId: CLIENT_ID,
+                discoveryDocs: DISCOVERY_DOCS,
+                scope: SCOPES
+            }).then(function () {
+                gapi.auth2.getAuthInstance().isSignedIn.listen(updateSigninStatus);
+                updateSigninStatus(gapi.auth2.getAuthInstance().isSignedIn.get());
+            }, function(error) {
+                console.error(JSON.stringify(error, null, 2));
+            });
+        }
+
+        function updateSigninStatus(isSignedIn) {
+            const btn = document.getElementById('btn-auth-google');
+            const statusDiv = document.getElementById('calendar-status');
+            const eventsDiv = document.getElementById('calendar-events');
+            
+            if (isSignedIn) {
+                if(btn) btn.innerHTML = '<i class="fas fa-sign-out-alt text-red-500 mr-2"></i> Desconectar Calendar';
+                if(statusDiv) statusDiv.classList.add('hidden');
+                if(eventsDiv) eventsDiv.classList.remove('hidden');
+                listUpcomingEvents();
+            } else {
+                if(btn) btn.innerHTML = '<img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" class="w-5 h-5 mr-2" alt="G"> Conectar Conta Google';
+                if(statusDiv) statusDiv.classList.remove('hidden');
+                if(eventsDiv) eventsDiv.classList.add('hidden');
+            }
+        }
+
+        window.handleAuthClick = function() {
+            if(!gapi.auth2) {
+                Swal.fire('Aviso', 'A API do Google ainda está carregando. Tente novamente em alguns segundos.', 'warning');
+                return;
+            }
+            if (gapi.auth2.getAuthInstance().isSignedIn.get()) {
+                gapi.auth2.getAuthInstance().signOut();
+            } else {
+                gapi.auth2.getAuthInstance().signIn().catch(err => {
+                    if (err.error !== 'popup_closed_by_user') {
+                        Swal.fire('Erro no Google Login', 'Verifique se as URLs de origem (localhost/vercel) estão autorizadas no Google Cloud Console. Erro: ' + err.error, 'error');
+                        console.error(err);
+                    }
+                });
+            }
+        };
+
+        function listUpcomingEvents() {
+            if (!gapi.client || !gapi.client.calendar) return;
+            gapi.client.calendar.events.list({
+                'calendarId': 'primary',
+                'timeMin': (new Date()).toISOString(),
+                'showDeleted': false,
+                'singleEvents': true,
+                'maxResults': 10,
+                'orderBy': 'startTime'
+            }).then(function(response) {
+                const events = response.result.items;
+                const ul = document.getElementById('events-list');
+                ul.innerHTML = '';
+                
+                if (events.length > 0) {
+                    for (let i = 0; i < events.length; i++) {
+                        let event = events[i];
+                        let when = event.start.dateTime;
+                        if (!when) { when = event.start.date; }
+                        
+                        let dataStr = new Date(when).toLocaleString('pt-BR');
+                        ul.innerHTML += `<li class="p-3 border rounded border-gray-100 flex items-start gap-3 bg-gray-50"><i class="fas fa-calendar-check text-blue-500 mt-1"></i><div><p class="font-bold text-gray-800">${event.summary}</p><p class="text-sm text-gray-600">${dataStr}</p></div></li>`;
+                    }
+                } else {
+                    ul.innerHTML = '<li class="text-gray-500 p-4 border rounded border-gray-100 text-center">Nenhum evento futuro encontrado.</li>';
+                }
+            });
+        }
+
+        window.createCalendarEvent = function(turmaNome, horario, dias) {
+            const date = new Date();
+            // Tenta pegar a hora se houver
+            let hour = 19; let min = 0;
+            if(horario && horario.includes(':')) {
+                hour = parseInt(horario.split(':')[0]) || 19;
+                min = parseInt(horario.split(':')[1]) || 0;
+            }
+            date.setHours(hour, min, 0, 0);
+
+            const endDate = new Date(date);
+            endDate.setHours(hour + 1, min, 0, 0);
+
+            const event = {
+                'summary': `Aula: ${turmaNome}`,
+                'description': `Turma ${turmaNome} - Dias: ${dias}`,
+                'start': {
+                    'dateTime': date.toISOString(),
+                    'timeZone': 'America/Sao_Paulo'
+                },
+                'end': {
+                    'dateTime': endDate.toISOString(),
+                    'timeZone': 'America/Sao_Paulo'
+                }
+            };
+
+            const request = gapi.client.calendar.events.insert({
+                'calendarId': 'primary',
+                'resource': event
+            });
+
+            request.execute(function(event) {
+                if (event.htmlLink) {
+                    console.log('Evento criado no Calendar: ' + event.htmlLink);
+                } else {
+                    console.error('Erro ao criar evento');
+                }
+            });
+        };
+
+        // Inicializa o sistema (Checa login)
+        window.onload = function() {
+            handleClientLoad(); // Init Google
+            checkAuth();
+        };
     </script>
 </body>
 </html>

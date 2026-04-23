@@ -1,0 +1,724 @@
+﻿<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Central de Gest├úo - Escola de Ingl├¬s</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        .sidebar { transition: all 0.3s; }
+        .page-section { animation: fadeIn 0.3s; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .card-hover { transition: transform 0.2s; }
+        .card-hover:hover { transform: translateY(-2px); }
+    </style>
+</head>
+<body class="bg-gray-50">
+
+    <!-- Sidebar -->
+    <div class="sidebar fixed left-0 top-0 h-full w-64 bg-blue-900 text-white overflow-y-auto z-40">
+        <div class="p-4 border-b border-blue-800">
+            <h1 class="text-xl font-bold">­ƒÅ½ Central de Gest├úo</h1>
+            <p class="text-sm text-blue-200">Escola de Ingl├¬s</p>
+        </div>
+        <nav class="mt-4">
+            <a href="#" onclick="showPage('dashboard')" class="block px-4 py-3 hover:bg-blue-800 transition"><i class="fas fa-chart-line w-6"></i> Dashboard</a>
+            <a href="#" onclick="showPage('leads')" class="block px-4 py-3 hover:bg-blue-800 transition"><i class="fas fa-users w-6"></i> CRM Leads</a>
+            <a href="#" onclick="showPage('alunos')" class="block px-4 py-3 hover:bg-blue-800 transition"><i class="fas fa-graduation-cap w-6"></i> Alunos</a>
+            <a href="#" onclick="showPage('turmas')" class="block px-4 py-3 hover:bg-blue-800 transition"><i class="fas fa-chalkboard-teacher w-6"></i> Turmas</a>
+            <a href="#" onclick="showPage('professores')" class="block px-4 py-3 hover:bg-blue-800 transition"><i class="fas fa-user-tie w-6"></i> Professores</a>
+            <a href="#" onclick="showPage('financeiro')" class="block px-4 py-3 hover:bg-blue-800 transition"><i class="fas fa-dollar-sign w-6"></i> Financeiro</a>
+            <a href="#" onclick="showPage('tarefas')" class="block px-4 py-3 hover:bg-blue-800 transition"><i class="fas fa-tasks w-6"></i> Tarefas</a>
+            <a href="#" onclick="showPage('metodo')" class="block px-4 py-3 hover:bg-blue-800 transition"><i class="fas fa-book w-6"></i> M├®todo & Progresso</a>
+            <a href="#" onclick="showPage('aniversariantes')" class="block px-4 py-3 hover:bg-blue-800 transition"><i class="fas fa-birthday-cake w-6"></i> Aniversariantes</a>
+            <a href="#" onclick="showPage('marketing')" class="block px-4 py-3 hover:bg-blue-800 transition"><i class="fas fa-ad w-6"></i> Marketing / ROI</a>
+            <a href="#" onclick="showPage('templates')" class="block px-4 py-3 hover:bg-blue-800 transition"><i class="fas fa-comment-dots w-6"></i> Templates</a>
+        </nav>
+        <div class="absolute bottom-0 w-full p-4 border-t border-blue-800">
+            <p class="text-xs text-blue-300">v2.0 ┬À Suyanne Gest├úo</p>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="ml-64 p-8">
+        
+        <!-- Header -->
+        <header class="mb-8 flex justify-between items-center">
+            <div>
+                <h2 class="text-3xl font-bold text-gray-800" id="page-title">Dashboard</h2>
+                <p class="text-gray-600" id="page-subtitle">Vis├úo geral do sistema</p>
+            </div>
+        </header>
+
+        <!-- DASHBOARD -->
+        <div id="page-dashboard" class="page-section">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                <div class="bg-white p-6 rounded-lg shadow card-hover">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h3 class="text-gray-500 text-sm font-semibold uppercase">Leads Totais</h3>
+                            <p id="dash-total-leads" class="text-4xl font-bold text-blue-600 mt-2">...</p>
+                        </div>
+                        <div class="bg-blue-100 p-3 rounded-full"><i class="fas fa-users text-blue-600 text-xl"></i></div>
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow card-hover">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h3 class="text-gray-500 text-sm font-semibold uppercase">Alunos Ativos</h3>
+                            <p id="dash-total-alunos" class="text-4xl font-bold text-green-600 mt-2">...</p>
+                        </div>
+                        <div class="bg-green-100 p-3 rounded-full"><i class="fas fa-graduation-cap text-green-600 text-xl"></i></div>
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow card-hover">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h3 class="text-gray-500 text-sm font-semibold uppercase">Receita (M├¬s)</h3>
+                            <p id="dash-receita" class="text-4xl font-bold text-purple-600 mt-2">...</p>
+                        </div>
+                        <div class="bg-purple-100 p-3 rounded-full"><i class="fas fa-dollar-sign text-purple-600 text-xl"></i></div>
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow card-hover">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h3 class="text-gray-500 text-sm font-semibold uppercase">Inadimpl├¬ncia</h3>
+                            <p id="dash-inadimplencia" class="text-4xl font-bold text-red-600 mt-2">...</p>
+                        </div>
+                        <div class="bg-red-100 p-3 rounded-full"><i class="fas fa-exclamation-triangle text-red-600 text-xl"></i></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- LEADS -->
+        <div id="page-leads" class="page-section hidden">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-3xl font-bold">CRM Leads</h2>
+                <button onclick="openModal('leads')" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">
+                    <i class="fas fa-plus mr-2"></i>Novo Lead
+                </button>
+            </div>
+            <div class="bg-white rounded-lg shadow overflow-hidden">
+                <table class="w-full">
+                    <thead class="bg-gray-100">
+                        <tr><th class="p-3 text-left">Nome</th><th class="p-3 text-left">Email</th><th class="p-3 text-left">Telefone</th><th class="p-3 text-left">Etapa</th><th class="p-3 text-left">A├º├Áes</th></tr>
+                    </thead>
+                    <tbody id="table-leads"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ALUNOS -->
+        <div id="page-alunos" class="page-section hidden">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-3xl font-bold">Alunos</h2>
+                <button onclick="openModal('alunos')" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition">
+                    <i class="fas fa-plus mr-2"></i>Novo Aluno
+                </button>
+            </div>
+            <div class="bg-white rounded-lg shadow overflow-hidden">
+                <table class="w-full">
+                    <thead class="bg-gray-100">
+                        <tr><th class="p-3 text-left">Nome</th><th class="p-3 text-left">Email</th><th class="p-3 text-left">Telefone</th><th class="p-3 text-left">N├¡vel</th><th class="p-3 text-left">Status</th><th class="p-3 text-left">A├º├Áes</th></tr>
+                    </thead>
+                    <tbody id="table-alunos"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- TURMAS -->
+        <div id="page-turmas" class="page-section hidden">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-3xl font-bold">Turmas</h2>
+                <button onclick="openModal('turmas')" class="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 transition">
+                    <i class="fas fa-plus mr-2"></i>Nova Turma
+                </button>
+            </div>
+            <div id="list-turmas" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+        </div>
+
+        <!-- PROFESSORES -->
+        <div id="page-professores" class="page-section hidden">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-3xl font-bold">Professores</h2>
+                <button onclick="openModal('professores')" class="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700 transition">
+                    <i class="fas fa-plus mr-2"></i>Novo Professor
+                </button>
+            </div>
+            <div id="list-professores" class="space-y-4"></div>
+        </div>
+
+        <!-- FINANCEIRO -->
+        <div id="page-financeiro" class="page-section hidden">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-3xl font-bold">Financeiro</h2>
+                <button onclick="openModal('financeiro')" class="bg-yellow-600 text-white px-4 py-2 rounded hover:bg-yellow-700 transition">
+                    <i class="fas fa-plus mr-2"></i>Nova Cobran├ºa
+                </button>
+            </div>
+            <div class="bg-white rounded-lg shadow overflow-hidden">
+                <table class="w-full">
+                    <thead class="bg-gray-100">
+                        <tr><th class="p-3 text-left">Aluno</th><th class="p-3 text-left">Descri├º├úo</th><th class="p-3 text-left">Vencimento</th><th class="p-3 text-left">Valor</th><th class="p-3 text-left">Status</th><th class="p-3 text-left">A├º├Áes</th></tr>
+                    </thead>
+                    <tbody id="table-financeiro"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- TAREFAS -->
+        <div id="page-tarefas" class="page-section hidden">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-3xl font-bold">Tarefas</h2>
+                <button onclick="openModal('tarefas')" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition">
+                    <i class="fas fa-plus mr-2"></i>Nova Tarefa
+                </button>
+            </div>
+            <div id="list-tarefas" class="space-y-4"></div>
+        </div>
+
+        <!-- M├ëTODO -->
+        <div id="page-metodo" class="page-section hidden">
+            <h2 class="text-3xl font-bold mb-6">M├®todo & Progresso</h2>
+            <div id="list-fases" class="space-y-4"></div>
+        </div>
+
+        <!-- ANIVERSARIANTES -->
+        <div id="page-aniversariantes" class="page-section hidden">
+            <h2 class="text-3xl font-bold mb-6">Aniversariantes do M├¬s</h2>
+            <div id="list-aniversariantes" class="space-y-4"></div>
+        </div>
+
+        <!-- MARKETING -->
+        <div id="page-marketing" class="page-section hidden">
+            <h2 class="text-3xl font-bold mb-6">Marketing / ROI</h2>
+            <div id="list-marketing" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
+        </div>
+
+        <!-- TEMPLATES -->
+        <div id="page-templates" class="page-section hidden">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-3xl font-bold">Templates de Mensagem</h2>
+                <button onclick="openModal('templates')" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">
+                    <i class="fas fa-plus mr-2"></i>Novo Template
+                </button>
+            </div>
+            <div id="list-templates" class="space-y-4"></div>
+        </div>
+
+    </div>
+
+    <!-- MODAL -->
+    <div id="modal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
+            <h3 id="modal-title" class="text-xl font-bold mb-4">Novo Registro</h3>
+            <form id="modal-form" onsubmit="saveData(event)">
+                <div id="modal-fields" class="space-y-4"></div>
+                <div class="flex justify-end gap-2 mt-6">
+                    <button type="button" onclick="closeModal()" class="px-4 py-2 border rounded hover:bg-gray-100 transition">Cancelar</button>
+                    <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // ==========================================
+        // CONFIGURA├ç├âO SUPABASE - COLE SUAS CHAVES
+        // ==========================================
+        const SUPABASE_URL = 'https://waoinjpwdhdjhiybjuue.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indhb2luanB3ZGhkamhpeWJqdXVlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY3NDE0OTEsImV4cCI6MjA5MjMxNzQ5MX0.kVZx8I9geVvsKifw4-OnUjgr9--kYtdLEjQ_fcstN18';
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        let currentTable = '';
+        let currentId = null;
+
+        // ==========================================
+        // NAVEGA├ç├âO
+        // ==========================================
+        window.showPage = function(page) {
+            document.querySelectorAll('.page-section').forEach(el => el.classList.add('hidden'));
+            document.getElementById('page-' + page).classList.remove('hidden');
+            
+            const titles = {
+                'dashboard': ['Dashboard', 'Vis├úo geral do sistema'],
+                'leads': ['CRM Leads', 'Gerenciamento de potenciais alunos'],
+                'alunos': ['Alunos', 'Controle de matr├¡culas e progresso'],
+                'turmas': ['Turmas', 'Organiza├º├úo das turmas'],
+                'professores': ['Professores', 'Equipe docente'],
+                'financeiro': ['Financeiro', 'Controle de pagamentos'],
+                'tarefas': ['Tarefas', 'Gerenciamento de atividades'],
+                'metodo': ['M├®todo & Progresso', 'Fases do m├®todo de ensino'],
+                'aniversariantes': ['Aniversariantes', 'Comemora├º├Áes do m├¬s'],
+                'marketing': ['Marketing / ROI', 'Acompanhamento de campanhas'],
+                'templates': ['Templates', 'Modelos de mensagem']
+            };
+            
+            document.getElementById('page-title').textContent = titles[page][0];
+            document.getElementById('page-subtitle').textContent = titles[page][1];
+            
+            loadData(page);
+        };
+
+        // ==========================================
+        // CARREGAR DADOS - CORRE├ç├âO: NOMES PLURAIS
+        // ==========================================
+        async function loadData(page) {
+            try {
+                switch(page) {
+                    case 'dashboard': await loadDashboard(); break;
+                    case 'leads': await loadTable('leads', 'table-leads'); break;
+                    case 'alunos': await loadTable('alunos', 'table-alunos'); break;
+                    case 'professores': await loadProfessores(); break;
+                    case 'financeiro': await loadFinanceiro(); break;
+                    case 'tarefas': await loadTarefas(); break;
+                    case 'turmas': await loadTurmas(); break;
+                    case 'metodo': await loadMetodo(); break;
+                    case 'aniversariantes': await loadAniversariantes(); break;
+                    case 'marketing': await loadMarketing(); break;
+                    case 'templates': await loadTemplates(); break;
+                }
+            } catch (error) {
+                console.error('Erro ao carregar:', error);
+                Swal.fire('Erro', 'N├úo foi poss├¡vel carregar os dados: ' + error.message, 'error');
+            }
+        }
+
+        async function loadDashboard() {
+            try {
+                // Busca dados reais do Supabase - USANDO NOMES PLURAIS CORRETOS
+                const { count: countLeads, error: err1 } = await supabase.from('leads').select('*', { count: 'exact', head: true });
+                const { count: countAlunos, error: err2 } = await supabase.from('alunos').select('*', { count: 'exact', head: true }).eq('status', 'Ativo');
+                const { data: receitaData, error: err3 } = await supabase.from('financeiro').select('valor').eq('status', 'Pago');
+                const { data: inadimplenciaData, error: err4 } = await supabase.from('financeiro').select('valor').eq('status', 'Atrasado');
+                
+                if (err1) throw err1;
+                if (err2) throw err2;
+                
+                const receitaTotal = receitaData ? receitaData.reduce((sum, item) => sum + Number(item.valor), 0) : 0;
+                const inadimplenciaTotal = inadimplenciaData ? inadimplenciaData.reduce((sum, item) => sum + Number(item.valor), 0) : 0;
+                
+                document.getElementById('dash-total-leads').textContent = countLeads || 0;
+                document.getElementById('dash-total-alunos').textContent = countAlunos || 0;
+                document.getElementById('dash-receita').textContent = 'R$ ' + receitaTotal.toFixed(2).replace('.', ',');
+                document.getElementById('dash-inadimplencia').textContent = 'R$ ' + inadimplenciaTotal.toFixed(2).replace('.', ',');
+            } catch (error) {
+                console.error('Erro no dashboard:', error);
+            }
+        }
+
+        async function loadTable(table, elementId) {
+            const { data, error } = await supabase.from(table).select('*').order('created_at', { ascending: false });
+            if (error) throw error;
+            
+            const tbody = document.getElementById(elementId);
+            tbody.innerHTML = '';
+            
+            if (!data || data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="p-4 text-center text-gray-500">Nenhum registro encontrado</td></tr>';
+                return;
+            }
+            
+            data.forEach(row => {
+                const tr = document.createElement('tr');
+                tr.className = 'border-b hover:bg-gray-50 transition';
+                
+                let cells = '';
+                if (table === 'leads') {
+                    cells = `<td class="p-3 font-medium">${row.nome}</td><td class="p-3">${row.email || '-'}</td><td class="p-3">${row.telefone || '-'}</td><td class="p-3"><span class="px-2 py-1 bg-blue-100 rounded text-sm">${row.etapa}</span></td>`;
+                } else if (table === 'alunos') {
+                    cells = `<td class="p-3 font-medium">${row.nome}</td><td class="p-3">${row.email || '-'}</td><td class="p-3">${row.telefone || '-'}</td><td class="p-3">${row.nivel}</td><td class="p-3"><span class="px-2 py-1 bg-green-100 rounded text-sm">${row.status}</span></td>`;
+                }
+                
+                tr.innerHTML = cells + `
+                    <td class="p-3">
+                        <button onclick="deleteItem('${table}', '${row.id}')" class="text-red-600 hover:text-red-800 transition"><i class="fas fa-trash"></i></button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        async function loadTurmas() {
+            const { data, error } = await supabase.from('turmas').select('*, professores(nome)').order('nome');
+            if (error) throw error;
+            
+            const div = document.getElementById('list-turmas');
+            div.innerHTML = '';
+            
+            if (!data || data.length === 0) {
+                div.innerHTML = '<p class="text-gray-500 col-span-3 text-center py-8">Nenhuma turma cadastrada</p>';
+                return;
+            }
+            
+            data.forEach(t => {
+                div.innerHTML += `
+                    <div class="bg-white p-6 rounded-lg shadow card-hover">
+                        <h4 class="font-bold text-lg text-gray-800 mb-2">${t.nome}</h4>
+                        <div class="space-y-1 text-sm">
+                            <p class="text-gray-600"><i class="fas fa-chalkboard-teacher w-5"></i> ${t.professores?.nome || 'N├úo atribu├¡do'}</p>
+                            <p class="text-gray-600"><i class="fas fa-layer-group w-5"></i> ${t.nivel}</p>
+                            <p class="text-gray-600"><i class="fas fa-clock w-5"></i> ${t.horario || '-'}</p>
+                            <p class="text-gray-600"><i class="fas fa-calendar w-5"></i> ${t.dias || '-'}</p>
+                        </div>
+                        <div class="mt-4 flex justify-between items-center">
+                            <span class="px-3 py-1 bg-${t.status === 'Ativa' ? 'green' : 'yellow'}-100 text-${t.status === 'Ativa' ? 'green' : 'yellow'}-800 rounded-full text-xs font-semibold">${t.status}</span>
+                            <button onclick="deleteItem('turmas', '${t.id}')" class="text-red-600 hover:text-red-800 transition"><i class="fas fa-trash"></i></button>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        async function loadProfessores() {
+            const { data, error } = await supabase.from('professores').select('*').order('nome');
+            if (error) throw error;
+            
+            const div = document.getElementById('list-professores');
+            div.innerHTML = '';
+            
+            if (!data || data.length === 0) {
+                div.innerHTML = '<p class="text-gray-500 text-center py-8">Nenhum professor cadastrado</p>';
+                return;
+            }
+            
+            data.forEach(p => {
+                div.innerHTML += `
+                    <div class="bg-white p-4 rounded-lg shadow flex justify-between items-center card-hover">
+                        <div>
+                            <h4 class="font-bold text-gray-800">${p.nome}</h4>
+                            <p class="text-sm text-gray-600">${p.email || '-'}</p>
+                            <p class="text-sm text-gray-600">${p.telefone || '-'}</p>
+                        </div>
+                        <button onclick="deleteItem('professores', '${p.id}')" class="text-red-600 hover:text-red-800 transition px-3 py-2"><i class="fas fa-trash"></i></button>
+                    </div>
+                `;
+            });
+        }
+
+        async function loadFinanceiro() {
+            const { data, error } = await supabase.from('financeiro').select('*, alunos(nome)').order('vencimento', { ascending: false });
+            if (error) throw error;
+            
+            const tbody = document.getElementById('table-financeiro');
+            tbody.innerHTML = '';
+            
+            if (!data || data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="p-4 text-center text-gray-500">Nenhuma cobran├ºa cadastrada</td></tr>';
+                return;
+            }
+            
+            data.forEach(row => {
+                const tr = document.createElement('tr');
+                tr.className = 'border-b hover:bg-gray-50 transition';
+                tr.innerHTML = `
+                    <td class="p-3 font-medium">${row.alunos?.nome || '-'}</td>
+                    <td class="p-3">${row.descricao}</td>
+                    <td class="p-3">${new Date(row.vencimento).toLocaleDateString('pt-BR')}</td>
+                    <td class="p-3 font-semibold">R$ ${Number(row.valor).toFixed(2).replace('.', ',')}</td>
+                    <td class="p-3"><span class="px-2 py-1 bg-${row.status === 'Pago' ? 'green' : row.status === 'Atrasado' ? 'red' : 'yellow'}-100 rounded text-sm font-medium">${row.status}</span></td>
+                    <td class="p-3">
+                        ${row.status !== 'Pago' ? `<button onclick="markPaid('${row.id}')" class="text-green-600 hover:text-green-800 transition mr-3"><i class="fas fa-check"></i></button>` : ''}
+                        <button onclick="deleteItem('financeiro', '${row.id}')" class="text-red-600 hover:text-red-800 transition"><i class="fas fa-trash"></i></button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        async function loadTarefas() {
+            const { data, error } = await supabase.from('tarefas').select('*').order('prazo');
+            if (error) throw error;
+            
+            const div = document.getElementById('list-tarefas');
+            div.innerHTML = '';
+            
+            if (!data || data.length === 0) {
+                div.innerHTML = '<p class="text-gray-500 text-center py-8">Nenhuma tarefa cadastrada</p>';
+                return;
+            }
+            
+            data.forEach(t => {
+                div.innerHTML += `
+                    <div class="bg-white p-4 rounded-lg shadow flex justify-between items-center card-hover">
+                        <div class="flex-1">
+                            <h4 class="font-bold text-gray-800">${t.titulo}</h4>
+                            <p class="text-sm text-gray-600">${t.descricao || ''}</p>
+                            <p class="text-xs text-gray-500 mt-1"><i class="fas fa-calendar"></i> ${t.prazo ? new Date(t.prazo).toLocaleDateString('pt-BR') : 'Sem prazo'}</p>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <span class="px-2 py-1 bg-${t.prioridade === 'Alta' ? 'red' : t.prioridade === 'M├®dia' ? 'yellow' : 'blue'}-100 text-${t.prioridade === 'Alta' ? 'red' : t.prioridade === 'M├®dia' ? 'yellow' : 'blue'}-800 rounded text-xs font-semibold">${t.prioridade}</span>
+                            <button onclick="deleteItem('tarefas', '${t.id}')" class="text-red-600 hover:text-red-800 transition"><i class="fas fa-trash"></i></button>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        async function loadMetodo() {
+            const { data, error } = await supabase.from('metodo_fases').select('*').order('ordem');
+            if (error) throw error;
+            
+            const div = document.getElementById('list-fases');
+            div.innerHTML = '';
+            
+            if (!data || data.length === 0) {
+                div.innerHTML = '<p class="text-gray-500 text-center py-8">Nenhuma fase cadastrada</p>';
+                return;
+            }
+            
+            data.forEach(f => {
+                div.innerHTML += `
+                    <div class="bg-white p-6 rounded-lg shadow border-l-4 border-blue-600 card-hover">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h4 class="font-bold text-lg text-gray-800">${f.nome}</h4>
+                                <p class="text-sm text-gray-600 mt-1">${f.descricao}</p>
+                                <p class="text-xs text-gray-500 mt-2"><i class="fas fa-clock"></i> ${f.duracao_semanas} semanas</p>
+                            </div>
+                            <span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs font-bold">Fase ${f.ordem}</span>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        async function loadAniversariantes() {
+            const div = document.getElementById('list-aniversariantes');
+            div.innerHTML = '<div class="text-center py-8"><i class="fas fa-spinner fa-spin text-3xl text-blue-600"></i><p class="text-gray-600 mt-2">Carregando...</p></div>';
+
+            try {
+                // Usa a VIEW que j├í filtra aniversariantes do m├¬s
+                const { data, error } = await supabase.from('vw_aniversariantes_mes').select('*');
+                if (error) throw error;
+
+                div.innerHTML = '';
+
+                if (!data || data.length === 0) {
+                    div.innerHTML = '<div class="bg-white rounded-lg shadow p-8 text-center"><i class="fas fa-birthday-cake text-6xl text-gray-300 mb-4"></i><p class="text-gray-500 text-lg">Nenhum aniversariante este m├¬s ­ƒÄé</p></div>';
+                    return;
+                }
+
+                data.forEach(p => {
+                    div.innerHTML += `
+                        <div class="bg-white p-4 rounded-lg shadow flex items-center gap-4 card-hover border-l-4 border-pink-500">
+                            <div class="bg-pink-100 p-4 rounded-full">
+                                <i class="fas fa-birthday-cake text-pink-600 text-2xl"></i>
+                            </div>
+                            <div class="flex-1">
+                                <p class="font-bold text-gray-800 text-lg">${p.nome}</p>
+                                <p class="text-sm text-gray-600">Dia ${p.dia} ÔÇó ${p.idade_atual} anos ÔÇó ${p.tipo === 'aluno' ? '­ƒÄô Aluno' : '­ƒæñ Lead'}</p>
+                            </div>
+                        </div>
+                    `;
+                });
+            } catch (err) {
+                console.error('Erro:', err);
+                div.innerHTML = '<p class="text-red-500 text-center py-8">Erro ao carregar dados</p>';
+            }
+        }
+
+        async function loadMarketing() {
+            const { data, error } = await supabase.from('marketing').select('*').order('mes_ref', { ascending: false });
+            if (error) throw error;
+            
+            const div = document.getElementById('list-marketing');
+            div.innerHTML = '';
+            
+            if (!data || data.length === 0) {
+                div.innerHTML = '<p class="text-gray-500 col-span-2 text-center py-8">Nenhum dado de marketing</p>';
+                return;
+            }
+            
+            data.forEach(m => {
+                const cac = m.leads_gerados > 0 ? (m.investimento / m.leads_gerados).toFixed(2) : 0;
+                div.innerHTML += `
+                    <div class="bg-white p-6 rounded-lg shadow card-hover">
+                        <h4 class="font-bold text-lg text-gray-800 mb-3">${m.canal}</h4>
+                        <div class="grid grid-cols-2 gap-4 text-sm">
+                            <div>
+                                <p class="text-gray-600">Investimento</p>
+                                <p class="font-bold text-purple-600">R$ ${Number(m.investimento).toFixed(2)}</p>
+                            </div>
+                            <div>
+                                <p class="text-gray-600">Leads</p>
+                                <p class="font-bold text-blue-600">${m.leads_gerados}</p>
+                            </div>
+                            <div>
+                                <p class="text-gray-600">Alunos</p>
+                                <p class="font-bold text-green-600">${m.alunos_convertidos}</p>
+                            </div>
+                            <div>
+                                <p class="text-gray-600">Custo/Lead</p>
+                                <p class="font-bold text-red-600">R$ ${cac}</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        async function loadTemplates() {
+            const { data, error } = await supabase.from('templates').select('*');
+            if (error) throw error;
+            
+            const div = document.getElementById('list-templates');
+            div.innerHTML = '';
+            
+            if (!data || data.length === 0) {
+                div.innerHTML = '<p class="text-gray-500 text-center py-8">Nenhum template cadastrado</p>';
+                return;
+            }
+            
+            data.forEach(t => {
+                div.innerHTML += `
+                    <div class="bg-white p-6 rounded-lg shadow card-hover">
+                        <div class="flex justify-between items-start mb-3">
+                            <h4 class="font-bold text-lg text-gray-800">${t.nome}</h4>
+                            <span class="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs font-semibold">${t.canal}</span>
+                        </div>
+                        <p class="text-sm text-gray-600 bg-gray-50 p-3 rounded">${t.conteudo}</p>
+                    </div>
+                `;
+            });
+        }
+
+        // ==========================================
+        // MODAL E FORMUL├üRIOS - CORRE├ç├âO COMPLETA
+        // ==========================================
+        window.openModal = function(table) {
+            currentTable = table;
+            currentId = null;
+            const modal = document.getElementById('modal');
+            const title = document.getElementById('modal-title');
+            const fields = document.getElementById('modal-fields');
+            
+            const configs = {
+                'leads': { title: 'Novo Lead', fields: [
+                    { name: 'nome', label: 'Nome', type: 'text', required: true },
+                    { name: 'email', label: 'Email', type: 'email' },
+                    { name: 'telefone', label: 'Telefone', type: 'text' },
+                    { name: 'etapa', label: 'Etapa', type: 'select', options: ['Novo', 'Contato', 'Proposta', 'Negocia├º├úo', 'Fechado'] },
+                    { name: 'canal', label: 'Canal', type: 'select', options: ['Instagram', 'Indica├º├úo', 'WhatsApp', 'Google Ads', 'Facebook', 'Site'] },
+                    { name: 'temperatura', label: 'Temperatura', type: 'select', options: ['Frio', 'Morno', 'Quente'] }
+                ]},
+                'alunos': { title: 'Novo Aluno - Cadastro Completo', fields: [
+                    { name: 'nome', label: 'Nome Completo', type: 'text', required: true },
+                    { name: 'email', label: 'Email', type: 'email' },
+                    { name: 'telefone', label: 'Telefone/WhatsApp', type: 'text' },
+                    { name: 'endereco', label: 'Endere├ºo Completo', type: 'text' },
+                    { name: 'data_nascimento', label: 'Data de Nascimento', type: 'date' },
+                    { name: 'instagram', label: 'Instagram', type: 'text', placeholder: '@usuario' },
+                    { name: 'nivel', label: 'N├¡vel de Ingl├¬s', type: 'select', options: ['B├ísico', 'Intermedi├írio', 'Avan├ºado'] },
+                    { name: 'status', label: 'Status', type: 'select', options: ['Ativo', 'Pausado', 'Cancelado', 'Conclu├¡do'] }
+                ]},
+                'turmas': { title: 'Nova Turma', fields: [
+                    { name: 'nome', label: 'Nome', type: 'text', required: true },
+                    { name: 'nivel', label: 'N├¡vel', type: 'select', options: ['B├ísico', 'Intermedi├írio', 'Avan├ºado'] },
+                    { name: 'horario', label: 'Hor├írio', type: 'text', placeholder: 'Ex: 19:00' },
+                    { name: 'dias', label: 'Dias', type: 'text', placeholder: 'Ex: Segunda, Quarta, Sexta' }
+                ]},
+                'professores': { title: 'Novo Professor', fields: [
+                    { name: 'nome', label: 'Nome', type: 'text', required: true },
+                    { name: 'email', label: 'Email', type: 'email' },
+                    { name: 'telefone', label: 'Telefone', type: 'text' }
+                ]},
+                'financeiro': { title: 'Nova Cobran├ºa', fields: [
+                    { name: 'descricao', label: 'Descri├º├úo', type: 'text', required: true },
+                    { name: 'valor', label: 'Valor', type: 'number', step: '0.01', required: true },
+                    { name: 'vencimento', label: 'Vencimento', type: 'date', required: true }
+                ]},
+                'tarefas': { title: 'Nova Tarefa', fields: [
+                    { name: 'titulo', label: 'T├¡tulo', type: 'text', required: true },
+                    { name: 'descricao', label: 'Descri├º├úo', type: 'textarea' },
+                    { name: 'prazo', label: 'Prazo', type: 'date' },
+                    { name: 'prioridade', label: 'Prioridade', type: 'select', options: ['Alta', 'M├®dia', 'Baixa'] }
+                ]},
+                'templates': { title: 'Novo Template', fields: [
+                    { name: 'nome', label: 'Nome do Template', type: 'text', required: true },
+                    { name: 'categoria', label: 'Categoria', type: 'text', placeholder: 'Ex: Boas-vindas, Cobran├ºa' },
+                    { name: 'canal', label: 'Canal', type: 'select', options: ['WhatsApp', 'Instagram', 'Email', 'SMS'] },
+                    { name: 'conteudo', label: 'Conte├║do da Mensagem', type: 'textarea', required: true, placeholder: 'Use {{nome}} para personalizar' }
+                ]}
+            };
+            
+            const config = configs[table];
+            title.textContent = config.title;
+            fields.innerHTML = config.fields.map(f => {
+                if (f.type === 'select') {
+                    return `<div><label class="block text-sm font-medium mb-1">${f.label}</label><select name="${f.name}" class="w-full border rounded p-2 focus:ring-2 focus:ring-blue-500" ${f.required ? 'required' : ''}>${f.options.map(o => `<option value="${o}">${o}</option>`).join('')}</select></div>`;
+                }
+                if (f.type === 'textarea') {
+                    return `<div><label class="block text-sm font-medium mb-1">${f.label}</label><textarea name="${f.name}" rows="3" class="w-full border rounded p-2 focus:ring-2 focus:ring-blue-500" ${f.required ? 'required' : ''} ${f.placeholder ? `placeholder="${f.placeholder}"` : ''}></textarea></div>`;
+                }
+                return `<div><label class="block text-sm font-medium mb-1">${f.label}</label><input type="${f.type}" name="${f.name}" class="w-full border rounded p-2 focus:ring-2 focus:ring-blue-500" ${f.required ? 'required' : ''} ${f.step ? `step="${f.step}"` : ''} ${f.placeholder ? `placeholder="${f.placeholder}"` : ''}></div>`;
+            }).join('');
+            
+            modal.classList.remove('hidden');
+        };
+
+        window.closeModal = function() {
+            document.getElementById('modal').classList.add('hidden');
+        };
+
+        window.saveData = async function(e) {
+            e.preventDefault();
+            const form = e.target;
+            const formData = new FormData(form);
+            const data = Object.fromEntries(formData.entries());
+            
+            try {
+                const { error } = await supabase.from(currentTable).insert(data);
+                
+                if (error) {
+                    Swal.fire('Erro', error.message, 'error');
+                } else {
+                    Swal.fire('Sucesso', 'Registro salvo com sucesso!', 'success');
+                    closeModal();
+                    loadData(currentTable);
+                    loadDashboard(); // Atualiza dashboard ap├│s salvar
+                }
+            } catch (error) {
+                Swal.fire('Erro', 'Erro ao salvar: ' + error.message, 'error');
+            }
+        };
+
+        window.deleteItem = async function(table, id) {
+            if (!confirm('Confirmar exclus├úo?')) return;
+            try {
+                const { error } = await supabase.from(table).delete().eq('id', id);
+                if (error) throw error;
+                Swal.fire('Exclu├¡do!', 'Registro removido com sucesso.', 'success');
+                loadData(table);
+                loadDashboard();
+            } catch (error) {
+                Swal.fire('Erro', error.message, 'error');
+            }
+        };
+
+        window.markPaid = async function(id) {
+            try {
+                const { error } = await supabase.from('financeiro').update({ 
+                    status: 'Pago', 
+                    data_pagamento: new Date().toISOString() 
+                }).eq('id', id);
+                
+                if (error) throw error;
+                Swal.fire('Pago!', 'Cobran├ºa marcada como paga.', 'success');
+                loadFinanceiro();
+                loadDashboard();
+            } catch (error) {
+                Swal.fire('Erro', error.message, 'error');
+            }
+        };
+
+        // Inicializa o sistema
+        showPage('dashboard');
+    </script>
+</body>
+</html>
