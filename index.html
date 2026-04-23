@@ -201,7 +201,7 @@
             <a href="#" onclick="handleLogout()" class="block px-4 py-3 hover:bg-red-800 transition text-red-300 mt-4 border-t border-blue-800"><i class="fas fa-sign-out-alt w-6"></i> Sair do Sistema</a>
         </nav>
         <div class="absolute bottom-0 w-full p-4 border-t border-blue-800">
-            <p class="text-xs text-blue-300">v3.3 · Suyanne Gestão</p>
+            <p class="text-xs text-blue-300">v3.4 · Suyanne Gestão</p>
         </div>
     </div>
 
@@ -1181,6 +1181,42 @@
             });
         }
 
+        async function loadEquipe() {
+            const { data, error } = await supabaseClient.from('equipe').select('*').order('nome');
+            if (error) throw error;
+            
+            window.appData['equipe'] = data;
+            const div = document.getElementById('list-equipe');
+            div.innerHTML = '';
+            
+            if (!data || data.length === 0) {
+                div.innerHTML = '<p class="text-gray-500 col-span-2 text-center py-8">Nenhum membro cadastrado</p>';
+                return;
+            }
+            
+            data.forEach(m => {
+                div.innerHTML += `
+                    <div class="bg-white p-6 rounded-lg shadow card-hover border-l-4 border-teal-500">
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <h4 class="font-bold text-lg text-gray-800">${m.nome}</h4>
+                                <span class="px-2 py-0.5 bg-teal-100 text-teal-800 rounded text-xs font-bold">${m.cargo || 'Membro'}</span>
+                            </div>
+                            <div class="flex gap-2">
+                                <button onclick="openModal('equipe', '${m.id}')" class="text-blue-500 hover:text-blue-700 p-1"><i class="fas fa-edit"></i></button>
+                                <button onclick="deleteItem('equipe', '${m.id}')" class="text-red-400 hover:text-red-600 p-1"><i class="fas fa-trash"></i></button>
+                            </div>
+                        </div>
+                        <div class="space-y-2 text-sm text-gray-600">
+                            <p><i class="fas fa-envelope w-5"></i> ${m.email || '-'}</p>
+                            <p><i class="fas fa-phone w-5"></i> ${m.telefone || '-'}</p>
+                            <p><i class="fas fa-circle w-5 ${m.status === 'Ativo' ? 'text-green-500' : 'text-gray-400'}"></i> ${m.status || 'Ativo'}</p>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
         async function loadTemplates() {
             const { data, error } = await supabaseClient.from('templates').select('*').order('created_at', { ascending: false });
             if (error) throw error;
@@ -1673,8 +1709,8 @@
 
             // Força atualização se versão for antiga
             const lastVer = localStorage.getItem('app_version');
-            if (lastVer !== '3.3') {
-                localStorage.setItem('app_version', '3.3');
+            if (lastVer !== '3.4') {
+                localStorage.setItem('app_version', '3.4');
                 if ('serviceWorker' in navigator) {
                     navigator.serviceWorker.getRegistrations().then(regs => {
                         for(let reg of regs) reg.unregister();
