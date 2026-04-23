@@ -39,6 +39,9 @@
         #sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 40; }
         #sidebar-overlay.show { display: block; }
 
+        /* Landing Page Styles */
+        .landing-bg { background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%); }
+
         /* Bottom Nav UI */
         .bottom-nav { 
             display: none;
@@ -75,13 +78,51 @@
     <script src="https://apis.google.com/js/api.js"></script>
 </head>
 <body class="bg-gray-50 overflow-hidden" id="body">
-    <!-- TELA DE LOGIN -->
-    <div id="login-screen" class="fixed inset-0 bg-blue-900 flex items-center justify-center z-[100] transition-opacity duration-500">
-        <div class="bg-white p-8 rounded-xl shadow-2xl w-full max-w-sm text-center">
+    <!-- LANDING PAGE PÚBLICA (Para Verificação Google) -->
+    <div id="landing-page" class="fixed inset-0 landing-bg text-white overflow-y-auto z-[110] flex flex-col items-center p-6 text-center">
+        <div class="max-w-4xl w-full py-12">
+            <h1 class="text-4xl md:text-6xl font-black mb-6">CRM Google Calendar API</h1>
+            <p class="text-xl md:text-2xl text-blue-100 mb-12 max-w-2xl mx-auto">
+                A solução completa para gestão de escolas de inglês, integrando CRM, controle de alunos e automação de agenda via Google Calendar.
+            </p>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16 text-left">
+                <div class="bg-white/10 p-6 rounded-xl backdrop-blur-md border border-white/20">
+                    <i class="fas fa-users text-3xl mb-4 text-blue-300"></i>
+                    <h3 class="font-bold text-lg mb-2">Gestão de Leads</h3>
+                    <p class="text-sm text-blue-100">Acompanhe seus futuros alunos desde o primeiro contato até o fechamento.</p>
+                </div>
+                <div class="bg-white/10 p-6 rounded-xl backdrop-blur-md border border-white/20">
+                    <i class="fas fa-calendar-check text-3xl mb-4 text-blue-300"></i>
+                    <h3 class="font-bold text-lg mb-2">Google Sync</h3>
+                    <p class="text-sm text-blue-100">Sincronização bidirecional de aulas e horários diretamente na sua agenda Google.</p>
+                </div>
+                <div class="bg-white/10 p-6 rounded-xl backdrop-blur-md border border-white/20">
+                    <i class="fas fa-chart-line text-3xl mb-4 text-blue-300"></i>
+                    <h3 class="font-bold text-lg mb-2">Dashboards</h3>
+                    <p class="text-sm text-blue-100">Visão em tempo real do seu faturamento e progresso pedagógico.</p>
+                </div>
+            </div>
+
+            <button onclick="showLogin()" class="bg-white text-blue-900 font-black px-12 py-4 rounded-full text-xl shadow-2xl hover:bg-blue-50 transition transform hover:scale-105">
+                Acessar Painel Restrito
+            </button>
+            
+            <div class="mt-12 flex justify-center gap-6 text-sm text-blue-200">
+                <a href="privacy.html" class="hover:text-white underline">Privacidade</a>
+                <a href="terms.html" class="hover:text-white underline">Termos</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- TELA DE LOGIN (Oculta por padrão) -->
+    <div id="login-screen" class="fixed inset-0 bg-blue-900 flex items-center justify-center z-[120] hidden transition-opacity duration-500">
+        <div class="bg-white p-8 rounded-xl shadow-2xl w-full max-w-sm text-center relative">
+            <button onclick="hideLogin()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600"><i class="fas fa-times"></i></button>
             <div class="bg-blue-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
                 <i class="fas fa-lock text-3xl text-blue-600"></i>
             </div>
-            <h2 class="text-2xl font-bold text-gray-800 mb-2">Central de Gestão</h2>
+            <h2 class="text-2xl font-bold text-gray-800 mb-2">CRM Google Calendar API</h2>
             <p class="text-gray-500 text-sm mb-6">Acesso Restrito</p>
             <form id="login-form" onsubmit="handleLogin(event)" class="space-y-4">
                 <div>
@@ -96,10 +137,6 @@
                 <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition shadow-lg">Entrar no Sistema</button>
             </form>
             <p id="login-error" class="text-red-500 text-sm mt-4 hidden">Credenciais incorretas.</p>
-            <div class="mt-8 pt-4 border-t border-gray-100 flex justify-center gap-4 text-[10px] text-gray-400">
-                <a href="privacy.html" class="hover:text-blue-600 transition underline">Política de Privacidade</a>
-                <a href="terms.html" class="hover:text-blue-600 transition underline">Termos de Uso</a>
-            </div>
         </div>
     </div>
     <!-- Global Error Banner -->
@@ -483,6 +520,13 @@
         // ==========================================
         // LOGIN / AUTENTICAÇÃO
         // ==========================================
+        window.showLogin = () => {
+            document.getElementById('login-screen').classList.remove('hidden');
+        };
+        window.hideLogin = () => {
+            document.getElementById('login-screen').classList.add('hidden');
+        };
+
         window.handleLogin = function(e) {
             e.preventDefault();
             const email = document.getElementById('login-email').value.trim();
@@ -491,6 +535,7 @@
             
             if (validEmails.includes(email) && pass === 'Suyanne123@Hellden') {
                 localStorage.setItem('crm_logged_in', 'true');
+                document.getElementById('landing-page').classList.add('hidden');
                 document.getElementById('login-screen').classList.add('opacity-0', 'pointer-events-none');
                 document.getElementById('main-sidebar').classList.remove('hidden', 'opacity-0');
                 document.getElementById('main-content').classList.remove('opacity-0');
@@ -521,6 +566,7 @@
 
         function checkAuth() {
             if (localStorage.getItem('crm_logged_in') === 'true') {
+                document.getElementById('landing-page').classList.add('hidden');
                 document.getElementById('login-screen').classList.add('hidden');
                 document.getElementById('main-sidebar').classList.remove('hidden', 'opacity-0');
                 document.getElementById('main-content').classList.remove('opacity-0');
