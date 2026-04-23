@@ -76,6 +76,7 @@
     </style>
     <!-- Google API -->
     <script src="https://apis.google.com/js/api.js"></script>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body class="bg-gray-50 overflow-hidden" id="body">
     <!-- LANDING PAGE PÚBLICA (Para Verificação Google) -->
@@ -201,7 +202,7 @@
             <a href="#" onclick="handleLogout()" class="block px-4 py-3 hover:bg-red-800 transition text-red-300 mt-4 border-t border-blue-800"><i class="fas fa-sign-out-alt w-6"></i> Sair do Sistema</a>
         </nav>
         <div class="absolute bottom-0 w-full p-4 border-t border-blue-800">
-            <p class="text-xs text-blue-300">v3.4 · Suyanne Gestão</p>
+            <p class="text-xs text-blue-300">v3.5 · Suyanne Gestão</p>
         </div>
     </div>
 
@@ -1587,21 +1588,43 @@
         }
 
         window.handleAuthClick = function() {
-            if(!gapi.auth2) {
-                Swal.fire('Aviso', 'A API do Google ainda está carregando. Tente novamente em alguns segundos.', 'warning');
-                return;
-            }
-            if (gapi.auth2.getAuthInstance().isSignedIn.get()) {
-                gapi.auth2.getAuthInstance().signOut();
-            } else {
-                gapi.auth2.getAuthInstance().signIn().catch(err => {
-                    if (err.error !== 'popup_closed_by_user') {
-                        Swal.fire('Erro no Google Login', 'Verifique se as URLs de origem (localhost/vercel) estão autorizadas no Google Cloud Console. Erro: ' + err.error, 'error');
-                        console.error(err);
-                    }
-                });
+            try {
+                if(!gapi.auth2) {
+                    // Tenta reinicializar se falhou
+                    initClient();
+                    setTimeout(() => {
+                        if(!gapi.auth2) {
+                            Swal.fire('Google indisponível', 'Não foi possível carregar a biblioteca do Google. Verifique se você não tem bloqueadores de anúncios ativos ou se está em modo anônimo.', 'error');
+                        } else {
+                            doSignIn();
+                        }
+                    }, 2000);
+                    return;
+                }
+                doSignIn();
+            } catch (err) {
+                console.error("Erro no handleAuthClick:", err);
             }
         };
+
+        function doSignIn() {
+            const auth = gapi.auth2.getAuthInstance();
+            if (auth.isSignedIn.get()) {
+                auth.signOut();
+            } else {
+                auth.signIn({
+                    prompt: 'select_account',
+                    ux_mode: 'popup'
+                }).catch(err => {
+                    console.error("Erro detalhado Google:", err);
+                    let msg = "Verifique as URLs autorizadas no Google Cloud.";
+                    if (err.error === 'idpiframe_initialization_failed') msg = "Seu navegador está bloqueando cookies de terceiros. Tente desativar o 'Bloqueio de rastreamento' ou use uma janela normal.";
+                    else if (err.error === 'server_error') msg = "Erro de servidor no Google. Isso geralmente significa que a URL atual (" + window.location.origin + ") não está autorizada no painel do Google Cloud Console.";
+                    
+                    Swal.fire('Erro no Google Login', msg + '<br><br><small>Erro técnico: ' + err.error + '</small>', 'error');
+                });
+            }
+        }
 
         function listUpcomingEvents() {
             if (!gapi.client || !gapi.client.calendar) return;
@@ -1709,8 +1732,8 @@
 
             // Força atualização se versão for antiga
             const lastVer = localStorage.getItem('app_version');
-            if (lastVer !== '3.4') {
-                localStorage.setItem('app_version', '3.4');
+            if (lastVer !== '3.5') {
+                localStorage.setItem('app_version', '3.5');
                 if ('serviceWorker' in navigator) {
                     navigator.serviceWorker.getRegistrations().then(regs => {
                         for(let reg of regs) reg.unregister();
