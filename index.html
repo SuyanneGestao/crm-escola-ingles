@@ -546,36 +546,52 @@
 
         async function loadAniversariantes() {
             const div = document.getElementById('list-aniversariantes');
-            div.innerHTML = '<div class="text-center py-8"><i class="fas fa-spinner fa-spin text-3xl text-blue-600"></i><p class="text-gray-600 mt-2">Carregando...</p></div>';
+            div.innerHTML = '<div class="text-center py-12"><i class="fas fa-spinner fa-spin text-4xl text-pink-500"></i><p class="text-gray-500 mt-3 font-medium">Carregando aniversariantes...</p></div>';
 
             try {
-                // Usa a VIEW que já filtra aniversariantes do mês
                 const { data, error } = await supabase.from('vw_aniversariantes_mes').select('*');
                 if (error) throw error;
 
                 div.innerHTML = '';
 
                 if (!data || data.length === 0) {
-                    div.innerHTML = '<div class="bg-white rounded-lg shadow p-8 text-center"><i class="fas fa-birthday-cake text-6xl text-gray-300 mb-4"></i><p class="text-gray-500 text-lg">Nenhum aniversariante este mês 🎂</p></div>';
+                    div.innerHTML = `
+                        <div class="bg-white rounded-lg shadow p-10 text-center">
+                            <i class="fas fa-birthday-cake text-6xl text-gray-300 mb-4"></i>
+                            <p class="text-gray-500 text-lg font-medium">Nenhum aniversariante este mês 🎂</p>
+                            <p class="text-gray-400 text-sm mt-1">Cadastre alunos com data de nascimento para ver aqui</p>
+                        </div>`;
                     return;
                 }
 
+                // Ordena por dia
+                data.sort((a, b) => a.dia - b.dia);
+
+                div.innerHTML = `<p class="text-sm text-gray-500 mb-4"><i class="fas fa-info-circle mr-1"></i>${data.length} aniversariante(s) este mês</p>`;
+
                 data.forEach(p => {
+                    const waMsg = encodeURIComponent(`🎉 Parabéns, ${p.nome}! Desejamos um feliz aniversário e um ótimo dia! 🎂`);
+                    const waLink = p.telefone ? `https://wa.me/55${p.telefone.replace(/\D/g,'')}?text=${waMsg}` : null;
                     div.innerHTML += `
                         <div class="bg-white p-4 rounded-lg shadow flex items-center gap-4 card-hover border-l-4 border-pink-500">
-                            <div class="bg-pink-100 p-4 rounded-full">
+                            <div class="bg-pink-100 p-4 rounded-full flex-shrink-0">
                                 <i class="fas fa-birthday-cake text-pink-600 text-2xl"></i>
                             </div>
                             <div class="flex-1">
                                 <p class="font-bold text-gray-800 text-lg">${p.nome}</p>
-                                <p class="text-sm text-gray-600">Dia ${p.dia} • ${p.idade_atual} anos • ${p.tipo === 'aluno' ? '🎓 Aluno' : '👤 Lead'}</p>
+                                <p class="text-sm text-gray-500">Dia <strong class="text-pink-600">${p.dia}</strong> &bull; ${p.idade_atual} anos &bull; ${p.tipo === 'aluno' ? '🎓 Aluno' : '👤 Lead'}</p>
                             </div>
+                            ${waLink ? `
+                            <a href="${waLink}" target="_blank"
+                                class="bg-green-500 hover:bg-green-600 text-white px-3 py-2 rounded-lg text-sm font-semibold transition flex items-center gap-1 flex-shrink-0">
+                                <i class="fab fa-whatsapp"></i> Parabéns
+                            </a>` : ''}
                         </div>
                     `;
                 });
             } catch (err) {
                 console.error('Erro:', err);
-                div.innerHTML = '<p class="text-red-500 text-center py-8">Erro ao carregar dados</p>';
+                div.innerHTML = '<div class="bg-red-50 border border-red-200 rounded-lg p-6 text-center"><i class="fas fa-exclamation-circle text-red-500 text-3xl mb-2"></i><p class="text-red-600 font-medium">Erro ao carregar aniversariantes</p><p class="text-red-400 text-sm">' + err.message + '</p></div>';
             }
         }
 
@@ -620,27 +636,60 @@
         }
 
         async function loadTemplates() {
-            const { data, error } = await supabase.from('templates').select('*');
+            const { data, error } = await supabase.from('templates').select('*').order('created_at', { ascending: false });
             if (error) throw error;
             
             const div = document.getElementById('list-templates');
             div.innerHTML = '';
             
             if (!data || data.length === 0) {
-                div.innerHTML = '<p class="text-gray-500 text-center py-8">Nenhum template cadastrado</p>';
+                div.innerHTML = `
+                    <div class="bg-white rounded-lg shadow p-10 text-center">
+                        <i class="fas fa-comment-dots text-5xl text-gray-300 mb-4"></i>
+                        <p class="text-gray-500 text-lg font-medium">Nenhum template cadastrado</p>
+                        <p class="text-gray-400 text-sm mt-1">Clique em "Novo Template" para criar o primeiro</p>
+                    </div>`;
                 return;
             }
             
             data.forEach(t => {
+                const canalColors = {
+                    'WhatsApp': 'bg-green-100 text-green-800',
+                    'Instagram': 'bg-pink-100 text-pink-800',
+                    'Email': 'bg-blue-100 text-blue-800',
+                    'SMS': 'bg-yellow-100 text-yellow-800'
+                };
+                const canalClass = canalColors[t.canal] || 'bg-gray-100 text-gray-800';
                 div.innerHTML += `
-                    <div class="bg-white p-6 rounded-lg shadow card-hover">
+                    <div class="bg-white p-6 rounded-lg shadow card-hover border border-gray-100">
                         <div class="flex justify-between items-start mb-3">
-                            <h4 class="font-bold text-lg text-gray-800">${t.nome}</h4>
-                            <span class="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs font-semibold">${t.canal}</span>
+                            <div>
+                                <h4 class="font-bold text-lg text-gray-800">${t.nome}</h4>
+                                ${t.categoria ? `<span class="text-xs text-gray-500">${t.categoria}</span>` : ''}
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="px-2 py-1 ${canalClass} rounded text-xs font-semibold">${t.canal || '-'}</span>
+                                <button onclick="copyTemplate('${(t.conteudo||'').replace(/'/g,"&apos;")}')"
+                                    class="text-blue-500 hover:text-blue-700 transition p-1" title="Copiar mensagem">
+                                    <i class="fas fa-copy"></i>
+                                </button>
+                                <button onclick="deleteItem('templates', '${t.id}')"
+                                    class="text-red-400 hover:text-red-600 transition p-1" title="Excluir">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
                         </div>
-                        <p class="text-sm text-gray-600 bg-gray-50 p-3 rounded">${t.conteudo}</p>
+                        <p class="text-sm text-gray-600 bg-gray-50 p-3 rounded whitespace-pre-wrap">${t.conteudo}</p>
                     </div>
                 `;
+            });
+        }
+
+        function copyTemplate(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                Swal.fire({ icon: 'success', title: 'Copiado!', text: 'Mensagem copiada para a área de transferência.', timer: 1500, showConfirmButton: false });
+            }).catch(() => {
+                Swal.fire('Erro', 'Não foi possível copiar.', 'error');
             });
         }
 
