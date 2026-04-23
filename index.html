@@ -54,8 +54,11 @@
                 <div>
                     <input type="email" id="login-email" required placeholder="Seu email" class="w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-500">
                 </div>
-                <div>
-                    <input type="password" id="login-password" required placeholder="Sua senha" class="w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <div class="relative">
+                    <input type="password" id="login-password" required placeholder="Sua senha" class="w-full border border-gray-300 rounded-lg p-3 pr-12 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <button type="button" onclick="togglePasswordVisibility()" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition" tabindex="-1">
+                        <i id="eye-icon" class="fas fa-eye"></i>
+                    </button>
                 </div>
                 <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition shadow-lg">Entrar no Sistema</button>
             </form>
@@ -384,6 +387,18 @@
                 showPage('dashboard');
             } else {
                 document.getElementById('login-error').classList.remove('hidden');
+            }
+        };
+
+        window.togglePasswordVisibility = function() {
+            const passInput = document.getElementById('login-password');
+            const eyeIcon = document.getElementById('eye-icon');
+            if (passInput.type === 'password') {
+                passInput.type = 'text';
+                eyeIcon.classList.replace('fa-eye', 'fa-eye-slash');
+            } else {
+                passInput.type = 'password';
+                eyeIcon.classList.replace('fa-eye-slash', 'fa-eye');
             }
         };
 
@@ -1002,6 +1017,7 @@
             const title = document.getElementById('modal-title');
             const fields = document.getElementById('modal-fields');
             
+            const configs = {
                 'leads': { title: 'Lead', fields: [
                     { name: 'nome', label: 'Nome', type: 'text', required: true },
                     { name: 'email', label: 'Email', type: 'email' },
