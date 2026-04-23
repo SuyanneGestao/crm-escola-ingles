@@ -31,12 +31,45 @@
         @media (max-width: 768px) {
             .sidebar { position: fixed; left: 0; top: 0; transform: translateX(-100%); z-index: 50; }
             .sidebar.open { transform: translateX(0); }
-            .main-content { margin-left: 0 !important; }
+            .main-content { margin-left: 0 !important; padding-bottom: 80px !important; }
             .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+            .bottom-nav { display: flex !important; }
         }
         #pwa-banner { display: none; }
         #sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 40; }
         #sidebar-overlay.show { display: block; }
+
+        /* Bottom Nav UI */
+        .bottom-nav { 
+            display: none;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 70px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(15px);
+            justify-content: space-around;
+            align-items: center;
+            border-top: 1px solid rgba(0,0,0,0.08);
+            z-index: 45;
+            padding-bottom: env(safe-area-inset-bottom);
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+        }
+        .bottom-nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: #94a3b8;
+            font-size: 9px;
+            font-weight: 700;
+            text-transform: uppercase;
+            transition: all 0.3s;
+            flex: 1;
+        }
+        .bottom-nav-item.active { color: #1e3a8a; transform: translateY(-3px); }
+        .bottom-nav-item i { font-size: 22px; margin-bottom: 2px; }
+        .bottom-nav-item.active i { color: #2563eb; }
     </style>
     <!-- Google API -->
     <script src="https://apis.google.com/js/api.js"></script>
@@ -127,7 +160,7 @@
             <a href="#" onclick="handleLogout()" class="block px-4 py-3 hover:bg-red-800 transition text-red-300 mt-4 border-t border-blue-800"><i class="fas fa-sign-out-alt w-6"></i> Sair do Sistema</a>
         </nav>
         <div class="absolute bottom-0 w-full p-4 border-t border-blue-800">
-            <p class="text-xs text-blue-300">v3.2 · Suyanne Gestão</p>
+            <p class="text-xs text-blue-300">v3.3 · Suyanne Gestão</p>
         </div>
     </div>
 
@@ -135,9 +168,8 @@
     <div class="main-content ml-0 md:ml-64 p-4 md:p-8 opacity-0 transition-opacity duration-500" id="main-content">
 
         <!-- Header -->
-        <header class="mb-6 flex justify-between items-center">
+        <header class="mb-6 flex flex-wrap gap-4 justify-between items-center">
             <div class="flex items-center gap-3">
-                <!-- Hamburger (mobile only) -->
                 <button id="hamburger-btn" onclick="toggleSidebar()" class="md:hidden bg-blue-900 text-white p-2 rounded-lg">
                     <i class="fas fa-bars"></i>
                 </button>
@@ -146,9 +178,17 @@
                     <p class="text-gray-600 text-sm hidden md:block" id="page-subtitle">Visão geral do sistema</p>
                 </div>
             </div>
-            <button onclick="forceRefresh()" class="bg-blue-600 text-white px-3 py-2 rounded hover:bg-blue-700 transition flex items-center gap-2 text-sm">
-                <i class="fas fa-sync-alt" id="refresh-icon"></i> <span class="hidden md:inline">Atualizar Dados</span>
-            </button>
+            
+            <div class="flex items-center gap-2 flex-1 md:flex-none justify-end">
+                <div class="flex items-center gap-1 bg-white border rounded-lg p-1 text-[10px] md:text-xs shadow-sm">
+                    <input type="date" id="filter-start" onchange="forceRefresh()" class="border-none focus:ring-0 p-1 w-24 md:w-auto">
+                    <span class="text-gray-400">/</span>
+                    <input type="date" id="filter-end" onchange="forceRefresh()" class="border-none focus:ring-0 p-1 w-24 md:w-auto">
+                </div>
+                <button onclick="forceRefresh()" class="bg-blue-600 text-white px-3 py-2 rounded hover:bg-blue-700 transition flex items-center gap-2 text-sm">
+                    <i class="fas fa-sync-alt" id="refresh-icon"></i> <span class="hidden md:inline">Atualizar</span>
+                </button>
+            </div>
         </header>
 
         <!-- DASHBOARD -->
@@ -495,6 +535,12 @@
                 if (!pageEl) throw new Error("Página não encontrada: " + page);
                 pageEl.classList.remove('hidden');
             
+            // Ativa item no Bottom Nav
+            document.querySelectorAll('.bottom-nav-item').forEach(el => {
+                el.classList.remove('active');
+                if (el.getAttribute('onclick')?.includes(page)) el.classList.add('active');
+            });
+
             const titles = {
                 'dashboard': ['Dashboard', 'Visão geral do sistema'],
                 'leads': ['CRM Leads', 'Gerenciamento de potenciais alunos'],
@@ -527,6 +573,12 @@
         // ==========================================
         async function loadData(page) {
             try {
+                // Filtros de Data
+                const dateStart = document.getElementById('filter-start').value;
+                const dateEnd = document.getElementById('filter-end').value;
+                
+                window.currentFilters = { start: dateStart, end: dateEnd };
+
                 // Consolidação de carregadores
                 if (page === 'dashboard') await loadDashboard();
                 else if (page === 'leads') await loadLeads();
@@ -554,14 +606,26 @@
         }
         window.loadData = loadData;
 
+        // Realtime Sincronização
+        function setupRealtime() {
+            const channel = supabaseClient.channel('db-changes')
+                .on('postgres_changes', { event: '*', schema: 'public' }, (payload) => {
+                    console.log('Mudança detectada em:', payload.table);
+                    const currentPage = document.querySelector('.page-section:not(.hidden)')?.id.replace('page-', '');
+                    if (currentPage) loadData(currentPage);
+                })
+                .subscribe();
+        }
+
         async function loadDashboard() {
             try {
-                // Busca dados reais do Supabase - Dashboard Estilo Power BI
+                const { start, end } = window.currentFilters;
+                // Busca dados reais do Supabase - Dashboard Estilo Power BI com Filtro
                 const [leadsResp, alunosResp, financeiroResp, tarefasResp, turmasResp, equipeResp] = await Promise.all([
-                    supabaseClient.from('leads').select('*'),
-                    supabaseClient.from('alunos').select('*'),
-                    supabaseClient.from('financeiro').select('*'),
-                    supabaseClient.from('tarefas').select('*'),
+                    supabaseClient.from('leads').select('*').gte('created_at', start).lte('created_at', end + 'T23:59:59'),
+                    supabaseClient.from('alunos').select('*').gte('created_at', start).lte('created_at', end + 'T23:59:59'),
+                    supabaseClient.from('financeiro').select('*').gte('vencimento', start).lte('vencimento', end),
+                    supabaseClient.from('tarefas').select('*').gte('prazo', start).lte('prazo', end),
                     supabaseClient.from('turmas').select('*'),
                     supabaseClient.from('equipe').select('*')
                 ]);
@@ -637,7 +701,15 @@
         }
 
         async function loadTable(table, elementId) {
-            const { data, error } = await supabaseClient.from(table).select('*').order('created_at', { ascending: false });
+            const { start, end } = window.currentFilters;
+            const query = supabaseClient.from(table).select('*');
+            
+            // Aplica filtro de data se existir coluna correspondente
+            if (table === 'alunos' || table === 'leads') {
+                query.gte('created_at', start).lte('created_at', end + 'T23:59:59');
+            }
+            
+            const { data, error } = await query.order('created_at', { ascending: false });
             if (error) throw error;
             
             window.appData[table] = data;
@@ -673,7 +745,10 @@
         // KANBAN CRM LEADS
         // ==========================================
         async function loadLeads() {
-            const { data, error } = await supabaseClient.from('leads').select('*').order('created_at', { ascending: false });
+            const { start, end } = window.currentFilters;
+            const { data, error } = await supabaseClient.from('leads').select('*')
+                .gte('created_at', start).lte('created_at', end + 'T23:59:59')
+                .order('created_at', { ascending: false });
             if (error) throw error;
             
             window.appData['leads'] = data;
@@ -869,7 +944,10 @@
         }
 
         async function loadFinanceiro() {
-            const { data, error } = await supabaseClient.from('financeiro').select('*, alunos(nome)').order('vencimento', { ascending: false });
+            const { start, end } = window.currentFilters;
+            const { data, error } = await supabaseClient.from('financeiro').select('*, alunos(nome)')
+                .gte('vencimento', start).lte('vencimento', end)
+                .order('vencimento', { ascending: false });
             if (error) throw error;
             
             window.appData['financeiro'] = data;
@@ -901,7 +979,10 @@
         }
 
         async function loadTarefas() {
-            const { data, error } = await supabaseClient.from('tarefas').select('*').order('prazo');
+            const { start, end } = window.currentFilters;
+            const { data, error } = await supabaseClient.from('tarefas').select('*')
+                .gte('prazo', start).lte('prazo', end)
+                .order('prazo');
             if (error) throw error;
             
             window.appData['tarefas'] = data;
@@ -1505,12 +1586,44 @@
             });
         };
 
+    <!-- Bottom Nav (Mobile Only) -->
+    <nav class="bottom-nav">
+        <a href="#" onclick="showPage('leads')" class="bottom-nav-item">
+            <i class="fas fa-users"></i>
+            <span>CRM</span>
+        </a>
+        <a href="#" onclick="showPage('alunos')" class="bottom-nav-item">
+            <i class="fas fa-graduation-cap"></i>
+            <span>Alunos</span>
+        </a>
+        <a href="#" onclick="showPage('dashboard')" class="bottom-nav-item active">
+            <i class="fas fa-chart-pie"></i>
+            <span>Dashboard</span>
+        </a>
+        <a href="#" onclick="showPage('turmas')" class="bottom-nav-item">
+            <i class="fas fa-chalkboard-teacher"></i>
+            <span>Turmas</span>
+        </a>
+        <a href="#" onclick="showPage('agenda')" class="bottom-nav-item">
+            <i class="fas fa-calendar-alt"></i>
+            <span>Agenda</span>
+        </a>
+    </nav>
+
+    <script>
         // Inicializa o sistema (Checa login)
         window.onload = function() {
+            // Datas iniciais do filtro (mês atual)
+            const now = new Date();
+            const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
+            const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
+            document.getElementById('filter-start').value = startOfMonth;
+            document.getElementById('filter-end').value = endOfMonth;
+
             // Força atualização se versão for antiga
             const lastVer = localStorage.getItem('app_version');
-            if (lastVer !== '3.2') {
-                localStorage.setItem('app_version', '3.2');
+            if (lastVer !== '3.3') {
+                localStorage.setItem('app_version', '3.3');
                 if ('serviceWorker' in navigator) {
                     navigator.serviceWorker.getRegistrations().then(regs => {
                         for(let reg of regs) reg.unregister();
@@ -1519,6 +1632,7 @@
                 }
             }
             handleClientLoad(); // Init Google
+            setupRealtime();    // Sincronização em tempo real
             checkAuth();
         };
     </script>
