@@ -308,7 +308,7 @@
         // ==========================================
         const SUPABASE_URL = 'https://waoinjpwdhdjhiybjuue.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indhb2luanB3ZGhkamhpeWJqdXVlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY3NDE0OTEsImV4cCI6MjA5MjMxNzQ5MX0.kVZx8I9geVvsKifw4-OnUjgr9--kYtdLEjQ_fcstN18';
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         let currentTable = '';
         let currentId = null;
@@ -380,10 +380,10 @@
         async function loadDashboard() {
             try {
                 // Busca dados reais do Supabase - USANDO NOMES PLURAIS CORRETOS
-                const { count: countLeads, error: err1 } = await supabase.from('leads').select('*', { count: 'exact', head: true });
-                const { count: countAlunos, error: err2 } = await supabase.from('alunos').select('*', { count: 'exact', head: true }).eq('status', 'Ativo');
-                const { data: receitaData, error: err3 } = await supabase.from('financeiro').select('valor').eq('status', 'Pago');
-                const { data: inadimplenciaData, error: err4 } = await supabase.from('financeiro').select('valor').eq('status', 'Atrasado');
+                const { count: countLeads, error: err1 } = await supabaseClient.from('leads').select('*', { count: 'exact', head: true });
+                const { count: countAlunos, error: err2 } = await supabaseClient.from('alunos').select('*', { count: 'exact', head: true }).eq('status', 'Ativo');
+                const { data: receitaData, error: err3 } = await supabaseClient.from('financeiro').select('valor').eq('status', 'Pago');
+                const { data: inadimplenciaData, error: err4 } = await supabaseClient.from('financeiro').select('valor').eq('status', 'Atrasado');
                 
                 if (err1) throw err1;
                 if (err2) throw err2;
@@ -406,7 +406,7 @@
         }
 
         async function loadTable(table, elementId) {
-            const { data, error } = await supabase.from(table).select('*').order('created_at', { ascending: false });
+            const { data, error } = await supabaseClient.from(table).select('*').order('created_at', { ascending: false });
             if (error) throw error;
             
             const tbody = document.getElementById(elementId);
@@ -438,7 +438,7 @@
         }
 
         async function loadTurmas() {
-            const { data, error } = await supabase.from('turmas').select('*, professores(nome)').order('nome');
+            const { data, error } = await supabaseClient.from('turmas').select('*, professores(nome)').order('nome');
             if (error) throw error;
             
             const div = document.getElementById('list-turmas');
@@ -469,7 +469,7 @@
         }
 
         async function loadProfessores() {
-            const { data, error } = await supabase.from('professores').select('*').order('nome');
+            const { data, error } = await supabaseClient.from('professores').select('*').order('nome');
             if (error) throw error;
             
             const div = document.getElementById('list-professores');
@@ -495,7 +495,7 @@
         }
 
         async function loadFinanceiro() {
-            const { data, error } = await supabase.from('financeiro').select('*, alunos(nome)').order('vencimento', { ascending: false });
+            const { data, error } = await supabaseClient.from('financeiro').select('*, alunos(nome)').order('vencimento', { ascending: false });
             if (error) throw error;
             
             const tbody = document.getElementById('table-financeiro');
@@ -525,7 +525,7 @@
         }
 
         async function loadTarefas() {
-            const { data, error } = await supabase.from('tarefas').select('*').order('prazo');
+            const { data, error } = await supabaseClient.from('tarefas').select('*').order('prazo');
             if (error) throw error;
             
             const div = document.getElementById('list-tarefas');
@@ -554,7 +554,7 @@
         }
 
         async function loadMetodo() {
-            const { data, error } = await supabase.from('metodo_fases').select('*').order('ordem');
+            const { data, error } = await supabaseClient.from('metodo_fases').select('*').order('ordem');
             if (error) throw error;
             
             const div = document.getElementById('list-fases');
@@ -586,7 +586,7 @@
             div.innerHTML = '<div class="text-center py-12"><i class="fas fa-spinner fa-spin text-4xl text-pink-500"></i><p class="text-gray-500 mt-3 font-medium">Carregando aniversariantes...</p></div>';
 
             try {
-                const { data, error } = await supabase.from('vw_aniversariantes_mes').select('*');
+                const { data, error } = await supabaseClient.from('vw_aniversariantes_mes').select('*');
                 if (error) throw error;
 
                 div.innerHTML = '';
@@ -633,7 +633,7 @@
         }
 
         async function loadMarketing() {
-            const { data, error } = await supabase.from('marketing').select('*').order('mes_ref', { ascending: false });
+            const { data, error } = await supabaseClient.from('marketing').select('*').order('mes_ref', { ascending: false });
             if (error) throw error;
             
             const div = document.getElementById('list-marketing');
@@ -673,7 +673,7 @@
         }
 
         async function loadTemplates() {
-            const { data, error } = await supabase.from('templates').select('*').order('created_at', { ascending: false });
+            const { data, error } = await supabaseClient.from('templates').select('*').order('created_at', { ascending: false });
             if (error) throw error;
             
             const div = document.getElementById('list-templates');
@@ -815,7 +815,7 @@
             const data = Object.fromEntries(formData.entries());
             
             try {
-                const { error } = await supabase.from(currentTable).insert(data);
+                const { error } = await supabaseClient.from(currentTable).insert(data);
                 
                 if (error) {
                     Swal.fire('Erro', error.message, 'error');
@@ -833,7 +833,7 @@
         window.deleteItem = async function(table, id) {
             if (!confirm('Confirmar exclusão?')) return;
             try {
-                const { error } = await supabase.from(table).delete().eq('id', id);
+                const { error } = await supabaseClient.from(table).delete().eq('id', id);
                 if (error) throw error;
                 Swal.fire('Excluído!', 'Registro removido com sucesso.', 'success');
                 loadData(table);
@@ -845,7 +845,7 @@
 
         window.markPaid = async function(id) {
             try {
-                const { error } = await supabase.from('financeiro').update({ 
+                const { error } = await supabaseClient.from('financeiro').update({ 
                     status: 'Pago', 
                     data_pagamento: new Date().toISOString() 
                 }).eq('id', id);
