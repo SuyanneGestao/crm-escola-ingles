@@ -79,7 +79,7 @@
             <a href="#" onclick="showPage('templates')" class="block px-4 py-3 hover:bg-blue-800 transition"><i class="fas fa-comment-dots w-6"></i> Templates</a>
         </nav>
         <div class="absolute bottom-0 w-full p-4 border-t border-blue-800">
-            <p class="text-xs text-blue-300">v2.1 · Suyanne Gestão</p>
+            <p class="text-xs text-blue-300">v3.0 · Suyanne Gestão</p>
         </div>
     </div>
 
@@ -869,8 +869,20 @@
         let deferredPrompt = null;
 
         if ('serviceWorker' in navigator) {
+            // Limpa service workers antigos para forçar atualização
+            navigator.serviceWorker.getRegistrations().then(regs => {
+                regs.forEach(reg => {
+                    reg.update(); // Força busca por nova versão
+                });
+            });
+            // Limpa caches antigos
+            if ('caches' in window) {
+                caches.keys().then(keys => {
+                    keys.filter(k => k !== 'central-gestao-v3').forEach(k => caches.delete(k));
+                });
+            }
             navigator.serviceWorker.register('./sw.js')
-                .then(reg => console.log('✅ SW registrado:', reg.scope))
+                .then(reg => console.log('✅ SW v3 registrado:', reg.scope))
                 .catch(err => console.warn('SW erro:', err));
         }
 
