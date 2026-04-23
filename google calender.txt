@@ -1,0 +1,8 @@
+Google Calender APi 
+AIzaSyCQrviKrr0QPeDZyywqaKSv-zwESIcgs5E
+
+Cliente OAuth
+ID do cliente: 489155964163-r4b0mgut97qdqdh1n73pgjsmcdshhi0j.apps.googleusercontent.com
+Chave secreta do cliente: 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
+
+

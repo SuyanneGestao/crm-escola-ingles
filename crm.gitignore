@@ -1,0 +1,22 @@
+# Dependências
+node_modules/
+.pnpm/
+
+# Ambiente
+.env*.local
+.supabase/
+
+# Build
+.next/
+out/
+dist/
+
+# Sistema
+.DS_Store
+*.log
+.vscode/
+.idea/
+
+# Dados sensíveis
+*.key
+*.pem
